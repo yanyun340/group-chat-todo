@@ -3,120 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#F2F3F5">
+  <meta name="theme-color" content="#F4EFE6">
   <title>话里有事 · 群聊待办提取器</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="mesh" aria-hidden="true"></div>
-  <div class="grain" aria-hidden="true"></div>
+  <!-- 斜向撞色背景带，故意不对称 -->
+  <div class="bg" aria-hidden="true"></div>
 
-  <nav class="dock">
-    <span class="dock__brand"><span class="dot" aria-hidden="true"></span>话里有事</span>
-    <span class="dock__meta">本地运行 · 不联网</span>
-  </nav>
+  <header class="topbar">
+    <span class="brand">话里有事<span class="brand__star" aria-hidden="true">*</span></span>
+    <span class="topbar__tags">
+      <span class="tag tag--acid">本地运行</span>
+      <span class="tag">不联网 · 不接模型</span>
+    </span>
+  </header>
 
-  <main class="wrap">
-    <header class="hero">
-      <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>群聊待办提取器 · 无需联网 · 无需密钥</p>
-      <h1 class="hero__title">话里有事</h1>
-      <p class="hero__sub">把群聊记录贴进来，自动抽出要做的事、截止时间，和跟你有关的提醒。</p>
-    </header>
-
-    <div class="grid">
-      <div class="side" id="side">
-        <section class="panel console" id="console">
-          <div class="panel__inner">
-            <div class="panel__head">
-              <h2 class="panel__title">输入台</h2>
-              <span class="panel__tag mono">群聊记录</span>
-            </div>
-            <textarea id="chat" spellcheck="false" placeholder="每行一条，格式：昵称 时间 内容&#10;班长 09:15 明天下午5点前交高数作业"></textarea>
-            <div class="actions">
-              <button type="button" id="extract" class="btn btn--primary">
-                <span>提取待办</span>
-                <span class="btn__icon" aria-hidden="true">↗</span>
-              </button>
-              <button type="button" id="sample" class="btn btn--ghost">填入示例</button>
-              <button type="button" id="clear" class="btn btn--ghost">清空</button>
-            </div>
-            <p id="hint" class="hint" role="status" aria-live="polite"></p>
-          </div>
-        </section>
-
-        <section class="panel detail" id="detail" hidden>
-          <div class="panel__inner">
-            <div class="panel__head">
-              <h2 class="panel__title">解析</h2>
-              <button type="button" id="detail-close" class="btn btn--ghost btn--sm">返回输入台</button>
-            </div>
-            <p class="detail__text" id="detail-text"></p>
-            <div class="detail__meta" id="detail-meta"></div>
-            <div class="detail__block">
-              <p class="detail__label">提取依据</p>
-              <ul class="detail__reasons" id="detail-reasons"></ul>
-            </div>
-            <div class="detail__block">
-              <p class="detail__label">原文</p>
-              <p class="detail__source" id="detail-source"></p>
-            </div>
-          </div>
-        </section>
+  <main class="page">
+    <section class="hero">
+      <p class="kicker">群聊待办提取器<span class="kicker__line" aria-hidden="true"></span></p>
+      <h1 class="title">话里有事</h1>
+      <div class="hero__row">
+        <p class="sub">把群聊记录贴进来，自动抽出要做的事、截止时间，和跟你有关的提醒。</p>
+        <span class="stamp" aria-hidden="true">贴 &amp; 提</span>
       </div>
+    </section>
 
-      <section class="output">
-        <div id="placeholder" class="panel placeholder">
-          <div class="panel__inner">
-            <p class="placeholder__icon mono" aria-hidden="true">[ ]</p>
-            <p class="placeholder__title">还没有结果</p>
-            <p class="placeholder__sub">贴一段群聊记录，点「提取待办」开始。</p>
-          </div>
+    <div class="layout">
+      <!-- 左：结果 -->
+      <section class="col col--results">
+        <div id="placeholder" class="box placeholder">
+          <p class="placeholder__icon" aria-hidden="true">[ ]</p>
+          <p class="placeholder__title">还没有结果</p>
+          <p class="placeholder__sub">贴一段群聊记录，点「提取待办」开始。</p>
         </div>
 
         <section id="result" class="result" hidden>
           <div class="stats">
-            <div class="panel stat">
-              <div class="panel__inner">
-                <span class="stat__label">待办</span>
-                <span class="stat__num mono" id="stat-open">0</span>
-              </div>
+            <div class="stat stat--big stat--acid">
+              <span class="stat__label">待办</span>
+              <span class="stat__num" id="stat-open">0</span>
             </div>
-            <div class="panel stat">
-              <div class="panel__inner">
-                <span class="stat__label">与你相关</span>
-                <span class="stat__num mono" id="stat-relevant">0</span>
-              </div>
+            <div class="stat stat--blue">
+              <span class="stat__label">与你相关</span>
+              <span class="stat__num" id="stat-relevant">0</span>
             </div>
-            <div class="panel stat">
-              <div class="panel__inner">
-                <span class="stat__label">待确认</span>
-                <span class="stat__num mono" id="stat-confirm">0</span>
-              </div>
+            <div class="stat stat--pink">
+              <span class="stat__label">待确认</span>
+              <span class="stat__num" id="stat-confirm">0</span>
             </div>
-            <div class="panel stat">
-              <div class="panel__inner">
-                <span class="stat__label">已完成</span>
-                <span class="stat__num mono" id="stat-done">0</span>
-              </div>
+            <div class="stat stat--mint">
+              <span class="stat__label">已完成</span>
+              <span class="stat__num" id="stat-done">0</span>
             </div>
           </div>
 
-          <div class="panel results">
-            <div class="panel__inner">
-              <div class="results__head">
-                <nav class="tabs" aria-label="按状态筛选">
-                  <button type="button" class="tab active" data-filter="todo">待办</button>
-                  <button type="button" class="tab" data-filter="confirm">待确认</button>
-                  <button type="button" class="tab" data-filter="done">已完成</button>
-                </nav>
-                <button type="button" id="export" class="btn btn--ghost btn--sm">导出 JSON</button>
-              </div>
-              <p id="summary" class="summary"></p>
-              <ul id="list" class="list"></ul>
+          <div class="box listbox">
+            <div class="listbox__head">
+              <nav class="tabs" aria-label="按状态筛选">
+                <button type="button" class="tab active" data-filter="todo">待办</button>
+                <button type="button" class="tab" data-filter="confirm">待确认</button>
+                <button type="button" class="tab" data-filter="done">已完成</button>
+              </nav>
+              <button type="button" id="export" class="btn btn--ghost btn--sm">导出 JSON</button>
             </div>
+            <p id="summary" class="summary"></p>
+            <ul id="list" class="list"></ul>
           </div>
         </section>
       </section>
+
+      <!-- 右：控制台 / 解析 -->
+      <aside class="col col--side" id="side">
+        <section class="box console" id="console">
+          <div class="console__head">
+            <h2 class="boxtitle">输入台</h2>
+            <span class="tag mono">群聊记录</span>
+          </div>
+          <textarea id="chat" spellcheck="false" placeholder="每行一条，格式：昵称 时间 内容&#10;班长 09:15 明天下午5点前交高数作业"></textarea>
+          <div class="actions">
+            <button type="button" id="extract" class="btn btn--primary">
+              <span>提取待办</span>
+              <span class="btn__icon" aria-hidden="true">↗</span>
+            </button>
+            <button type="button" id="sample" class="btn btn--ghost">填入示例</button>
+            <button type="button" id="clear" class="btn btn--ghost">清空</button>
+          </div>
+          <p id="hint" class="hint" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="box detail" id="detail" hidden>
+          <div class="console__head">
+            <h2 class="boxtitle">解析</h2>
+            <button type="button" id="detail-close" class="btn btn--ghost btn--sm">返回输入台</button>
+          </div>
+          <p class="detail__text" id="detail-text"></p>
+          <div class="detail__meta" id="detail-meta"></div>
+          <div class="detail__block">
+            <p class="detail__label">提取依据</p>
+            <ul class="detail__reasons" id="detail-reasons"></ul>
+          </div>
+          <div class="detail__block">
+            <p class="detail__label">原文</p>
+            <p class="detail__source" id="detail-source"></p>
+          </div>
+        </section>
+      </aside>
     </div>
 
     <footer class="foot">
