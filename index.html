@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>群聊待办提取器</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="head">
+      <h1>群聊待办提取器</h1>
+      <p class="sub">把群聊记录贴进来，自动抽出要做的事</p>
+    </header>
+
+    <section class="paste">
+      <textarea id="chat" spellcheck="false" placeholder="把群聊记录贴在这里，每行一条，格式：昵称 时间 内容&#10;例如：班长 09:15 明天下午5点前交高数作业"></textarea>
+      <div class="actions">
+        <button type="button" id="extract" class="primary">提取待办</button>
+        <button type="button" id="sample" class="ghost">填入示例</button>
+        <button type="button" id="clear" class="ghost">清空</button>
+      </div>
+      <p id="hint" class="hint" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="result" class="result" hidden>
+      <div class="result-head">
+        <p id="summary" class="summary"></p>
+        <button type="button" id="export" class="ghost ghost--sm">导出 JSON</button>
+      </div>
+      <nav class="tabs" aria-label="按状态筛选">
+        <button type="button" class="tab active" data-filter="todo">待办</button>
+        <button type="button" class="tab" data-filter="confirm">待确认</button>
+        <button type="button" class="tab" data-filter="done">已完成</button>
+      </nav>
+      <ul id="list" class="list"></ul>
+    </section>
+
+    <footer class="foot">
+      <p>演示数据均为合成数据 · 数据只存在本浏览器 · 不联网、不接模型</p>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
