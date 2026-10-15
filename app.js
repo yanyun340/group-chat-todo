@@ -35,6 +35,11 @@
   const resultEl = document.getElementById('result');
   const summaryEl = document.getElementById('summary');
   const listEl = document.getElementById('list');
+  const placeholderEl = document.getElementById('placeholder');
+  const statOpenEl = document.getElementById('stat-open');
+  const statRelevantEl = document.getElementById('stat-relevant');
+  const statConfirmEl = document.getElementById('stat-confirm');
+  const statDoneEl = document.getElementById('stat-done');
   const tabEls = Array.from(document.querySelectorAll('.tab'));
 
   let items = [];
@@ -181,16 +186,23 @@
 
   function renderSummary() {
     const open = items.filter(function (i) { return !i.done; });
+    const todo = open.filter(function (i) { return i.state === 'todo'; }).length;
     const confirm = open.filter(function (i) { return i.state === 'confirm'; }).length;
     const relevant = open.filter(function (i) { return i.relevant; }).length;
+    const done = items.filter(function (i) { return i.done; }).length;
+    statOpenEl.textContent = todo;
+    statRelevantEl.textContent = relevant;
+    statConfirmEl.textContent = confirm;
+    statDoneEl.textContent = done;
     summaryEl.textContent = open.length === 0
-      ? '已全部完成'
-      : '共 ' + open.length + ' 件待办 · ' + relevant + ' 件与你相关 · ' + confirm + ' 条待确认';
+      ? '都清完了。'
+      : (confirm > 0 ? '有 ' + confirm + ' 条拿不准，已单独放进「待确认」' : '全部条目都可以直接执行');
   }
 
   function renderAll() {
-    if (items.length === 0) { resultEl.hidden = true; return; }
-    resultEl.hidden = false;
+    const empty = items.length === 0;
+    placeholderEl.hidden = !empty;
+    resultEl.hidden = empty;
     renderSummary();
     renderList();
   }
@@ -225,21 +237,24 @@
   function doExtract() {
     const text = chatEl.value;
     if (!text.trim()) {
-      resultEl.hidden = true;
+      items = [];
+      renderAll();
+      setActiveTab();
       setHint('先把群聊记录贴进来，再点提取。', 'warn');
       return;
     }
     const r = extractAll(text);
     items = r.items;
     filter = 'todo';
-    if (items.length === 0) {
-      resultEl.hidden = true;
-      setHint('没识别到待办：这段文字里没有明显的待办、截止时间或 @你。', 'warn');
-    } else {
-      setHint('已提取 ' + items.length + ' 件待办' + (r.deduped ? '，' + r.deduped + ' 条重复已合并' : '') + '。', 'ok');
-    }
     renderAll();
     setActiveTab();
+    if (items.length === 0) {
+      setHint('没识别到待办：这段文字里没有明显的待办、截止时间或 @你。', 'warn');
+      return;
+    }
+    listEl.classList.add('list--enter');
+    window.setTimeout(function () { listEl.classList.remove('list--enter'); }, 900);
+    setHint('已提取 ' + items.length + ' 件待办' + (r.deduped ? '，' + r.deduped + ' 条重复已合并' : '') + '。', 'ok');
     save();
   }
 
@@ -249,7 +264,6 @@
     chatEl.value = '';
     items = [];
     filter = 'todo';
-    resultEl.hidden = true;
     setHint('');
     renderAll();
     setActiveTab();
