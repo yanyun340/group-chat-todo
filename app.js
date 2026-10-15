@@ -30,6 +30,7 @@
   const chatEl = document.getElementById('chat');
   const extractBtn = document.getElementById('extract');
   const sampleBtn = document.getElementById('sample');
+  const quickstartBtn = document.getElementById('quickstart');
   const clearBtn = document.getElementById('clear');
   const hintEl = document.getElementById('hint');
   const resultEl = document.getElementById('result');
@@ -330,6 +331,7 @@
 
   extractBtn.addEventListener('click', doExtract);
   sampleBtn.addEventListener('click', function () { chatEl.value = SAMPLE_CHAT; setHint(''); save(); });
+  quickstartBtn.addEventListener('click', function () { chatEl.value = SAMPLE_CHAT; doExtract(); });
   clearBtn.addEventListener('click', function () {
     chatEl.value = '';
     items = [];

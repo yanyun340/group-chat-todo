@@ -6,18 +6,18 @@
    ============================================================ */
 
 :root {
-  /* 撞色色板：酸柠绿 × 钴蓝 × 荧光粉 × 薄荷，压在一个近黑骨架上 */
+  /* 撞色色板：芥末黄 × 靛蓝 × 陶土 × 灰绿，压在一个近黑骨架上 */
   --paper: #F4EFE6;   /* 暖纸底 */
   --paper-2: #EAE2D2;
   --ink: #141414;     /* 近黑 */
   --white: #FFFFFF;
 
-  --acid: #D9FF3D;    /* 酸柠绿 */
-  --blue: #2B3CFF;    /* 钴蓝 */
+  --acid: #D9B64A;    /* 芥末黄 */
+  --blue: #3B4C9E;    /* 靛蓝 */
   --blue-ink: #FFFFFF;
-  --pink: #FF4B8C;    /* 荧光粉 */
-  --mint: #2EE6A8;    /* 薄荷 */
-  --orange: #FF5A1F;  /* 橙 */
+  --pink: #CB6E5E;    /* 陶土 */
+  --mint: #74B293;    /* 灰绿 */
+  --orange: #C2541E;  /* 橙 */
 
   --amber: #B4630A;
   --red: #D43A26;
@@ -25,7 +25,7 @@
   --line: #141414;
   --line-soft: rgba(20, 20, 20, 0.16);
   --weak: #6E6A60;
-  --mark: #D9FF3D;
+  --mark: #D9B64A;
 
   /* 字体混搭：衬线标题 × 无衬线正文 × 等宽标签 */
   --display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
@@ -55,18 +55,17 @@ body {
   overflow-x: hidden;
 }
 
-/* ---- 斜向撞色背景带（不对称的底色）---- */
+/* ---- 斜向撞色背景带（不对称的底色，压淡不抢戏）---- */
 .bg {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(160deg, transparent 0 58%, var(--acid) 58% 62%, transparent 62%) no-repeat,
-    linear-gradient(115deg, transparent 0 46%, var(--pink) 46% 48%, transparent 48%) no-repeat;
-  background-size: 100% 62%, 100% 40%;
-  background-position: 0 108%, 0 100%;
-  opacity: 0.9;
+    linear-gradient(160deg, transparent 0 60%, var(--acid) 60% 64%, transparent 64%) no-repeat;
+  background-size: 100% 55%;
+  background-position: 0 115%;
+  opacity: 0.35;
 }
 
 /* ---- 顶栏 ---- */
@@ -281,21 +280,19 @@ textarea:focus { background: var(--white); }
 .hint--ok { color: #0E7A44; }
 .hint--warn { color: var(--amber); }
 
-/* ---- 输出区 ---- */
+/* ---- 输出区：空态引导卡（一键体验入口）---- */
 .placeholder {
-  min-height: 300px;
+  min-height: 260px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 8px;
-  text-align: center;
-  background:
-    repeating-linear-gradient(-45deg, var(--white) 0 16px, var(--paper) 16px 32px);
+  gap: 16px;
+  text-align: left;
+  background: var(--white);
 }
-.placeholder__icon { margin: 0; font-family: var(--mono); font-size: 44px; font-weight: 700; color: var(--blue); }
-.placeholder__title { margin: 8px 0 0; font-family: var(--display); font-weight: 900; font-size: 24px; }
-.placeholder__sub { margin: 0; color: var(--weak); }
+.placeholder__title { margin: 0; font-family: var(--display); font-weight: 900; font-size: 28px; }
+.placeholder__sub { margin: 0; color: var(--weak); max-width: 440px; line-height: 1.7; }
 
 /* ---- 统计块：不对称 grid，右下故意留空 ---- */
 .stats {
@@ -321,9 +318,14 @@ textarea:focus { background: var(--white); }
   background: var(--acid);
 }
 .stat--big .stat__num { font-size: 72px; }
-.stat--blue { background: var(--blue); color: var(--blue-ink); }
-.stat--pink { background: var(--pink); color: var(--white); }
-.stat--mint { background: var(--mint); }
+/* 三个次要统计：白底 + 各自色粗边 + 数字用色，压掉大面积高饱和 */
+.stat--blue { background: var(--white); color: var(--ink); border-left: 8px solid var(--blue); }
+.stat--pink { background: var(--white); color: var(--ink); border-left: 8px solid var(--pink); }
+.stat--mint { background: var(--white); color: var(--ink); border-left: 8px solid var(--mint); }
+.stat--blue .stat__num { color: var(--blue); }
+.stat--pink .stat__num { color: var(--pink); }
+.stat--mint .stat__num { color: var(--mint); }
+.stat--blue .stat__label, .stat--pink .stat__label, .stat--mint .stat__label { opacity: 0.6; }
 
 .stat__label { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; opacity: 0.85; }
 .stat__num { display: block; font-family: var(--mono); font-weight: 700; font-size: 34px; line-height: 1; }
