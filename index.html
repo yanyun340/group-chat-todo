@@ -24,24 +24,45 @@
     </header>
 
     <div class="grid">
-      <section class="panel console">
-        <div class="panel__inner">
-          <div class="panel__head">
-            <h2 class="panel__title">输入台</h2>
-            <span class="panel__tag mono">群聊记录</span>
+      <div class="side" id="side">
+        <section class="panel console" id="console">
+          <div class="panel__inner">
+            <div class="panel__head">
+              <h2 class="panel__title">输入台</h2>
+              <span class="panel__tag mono">群聊记录</span>
+            </div>
+            <textarea id="chat" spellcheck="false" placeholder="每行一条，格式：昵称 时间 内容&#10;班长 09:15 明天下午5点前交高数作业"></textarea>
+            <div class="actions">
+              <button type="button" id="extract" class="btn btn--primary">
+                <span>提取待办</span>
+                <span class="btn__icon" aria-hidden="true">↗</span>
+              </button>
+              <button type="button" id="sample" class="btn btn--ghost">填入示例</button>
+              <button type="button" id="clear" class="btn btn--ghost">清空</button>
+            </div>
+            <p id="hint" class="hint" role="status" aria-live="polite"></p>
           </div>
-          <textarea id="chat" spellcheck="false" placeholder="每行一条，格式：昵称 时间 内容&#10;班长 09:15 明天下午5点前交高数作业"></textarea>
-          <div class="actions">
-            <button type="button" id="extract" class="btn btn--primary">
-              <span>提取待办</span>
-              <span class="btn__icon" aria-hidden="true">↗</span>
-            </button>
-            <button type="button" id="sample" class="btn btn--ghost">填入示例</button>
-            <button type="button" id="clear" class="btn btn--ghost">清空</button>
+        </section>
+
+        <section class="panel detail" id="detail" hidden>
+          <div class="panel__inner">
+            <div class="panel__head">
+              <h2 class="panel__title">解析</h2>
+              <button type="button" id="detail-close" class="btn btn--ghost btn--sm">返回输入台</button>
+            </div>
+            <p class="detail__text" id="detail-text"></p>
+            <div class="detail__meta" id="detail-meta"></div>
+            <div class="detail__block">
+              <p class="detail__label">提取依据</p>
+              <ul class="detail__reasons" id="detail-reasons"></ul>
+            </div>
+            <div class="detail__block">
+              <p class="detail__label">原文</p>
+              <p class="detail__source" id="detail-source"></p>
+            </div>
           </div>
-          <p id="hint" class="hint" role="status" aria-live="polite"></p>
-        </div>
-      </section>
+        </section>
+      </div>
 
       <section class="output">
         <div id="placeholder" class="panel placeholder">

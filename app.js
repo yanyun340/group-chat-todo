@@ -40,10 +40,19 @@
   const statRelevantEl = document.getElementById('stat-relevant');
   const statConfirmEl = document.getElementById('stat-confirm');
   const statDoneEl = document.getElementById('stat-done');
+  const sideEl = document.getElementById('side');
+  const consoleEl = document.getElementById('console');
+  const detailEl = document.getElementById('detail');
+  const detailTextEl = document.getElementById('detail-text');
+  const detailMetaEl = document.getElementById('detail-meta');
+  const detailReasonsEl = document.getElementById('detail-reasons');
+  const detailSourceEl = document.getElementById('detail-source');
+  const detailCloseBtn = document.getElementById('detail-close');
   const tabEls = Array.from(document.querySelectorAll('.tab'));
 
   let items = [];
   let filter = 'todo';
+  let selectedId = null;
 
   // ---- 解析一行：昵称 时间 内容 / 昵称: 内容 / 纯内容 ----
   function parseLine(line) {
@@ -149,26 +158,84 @@
 
   function itemHTML(item) {
     const cls = item.done ? 'done' : item.state;
+    const selected = item.id === selectedId ? ' item--selected' : '';
     const typeKey = item.type || 'task';
     const type = '<span class="chip chip--type chip--type-' + typeKey + '">' + TYPE_LABEL[typeKey] + '</span>';
     const deadline = item.deadline ? '<span class="chip chip--deadline">' + escapeHTML(item.deadline) + '</span>' : '';
     const source = item.source ? '<span class="source">' + escapeHTML(item.source) + '</span>' : '';
     const me = item.relevant ? '<span class="chip chip--me">与你相关</span>' : '';
-    const why = item.reasons.length ? '<span class="why-reason">' + escapeHTML(item.reasons.join(' · ')) + '</span>' : '';
     return '' +
-      '<li class="item item--' + cls + '" data-id="' + item.id + '">' +
+      '<li class="item item--' + cls + selected + '" data-id="' + item.id + '">' +
         '<input type="checkbox" class="done-toggle"' + (item.done ? ' checked' : '') + '>' +
         '<div class="body">' +
           '<div class="text">' + escapeHTML(item.text) + '</div>' +
           '<div class="meta">' + type + deadline + me + source +
-            '<button type="button" class="why-toggle">为什么</button>' +
-          '</div>' +
-          '<div class="why" hidden>' + why +
-            '<p class="why-source">原文：' + highlightedSource(item) + '</p>' +
+            '<span class="item__more">解析 ›</span>' +
           '</div>' +
         '</div>' +
         '<button type="button" class="del" title="删除">删除</button>' +
       '</li>';
+  }
+
+  function chipHTML(label, cls) {
+    return '<span class="chip ' + cls + '">' + escapeHTML(label) + '</span>';
+  }
+
+  // 右侧「解析」：把这条为什么被抽出来的依据摊开
+  function renderDetail(item) {
+    const typeKey = item.type || 'task';
+    const stateLabel = item.done ? '已完成' : (item.state === 'todo' ? '待办' : '待确认');
+
+    detailTextEl.textContent = item.text;
+
+    const meta = [
+      chipHTML(TYPE_LABEL[typeKey], 'chip--type chip--type-' + typeKey),
+      chipHTML(stateLabel, 'chip--state' + (item.done ? ' chip--state-done' : ''))
+    ];
+    if (item.deadline) meta.push(chipHTML('截止 ' + item.deadline, 'chip--deadline'));
+    if (item.relevant) meta.push(chipHTML('与你相关', 'chip--me'));
+    if (item.source) meta.push('<span class="source">' + escapeHTML(item.source) + '</span>');
+    detailMetaEl.innerHTML = meta.join('');
+
+    const reasons = item.reasons.length ? item.reasons : ['未命中特定规则，按时间或相关性保留'];
+    detailReasonsEl.innerHTML = reasons.map(function (r) {
+      return '<li>' + escapeHTML(r) + '</li>';
+    }).join('');
+
+    detailSourceEl.innerHTML = highlightedSource(item);
+  }
+
+  function revealSide() {
+    if (!window.matchMedia('(max-width: 919px)').matches) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    sideEl.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  // 点某条 → 输入台换成解析；再点一次（或点返回）换回来
+  function selectItem(id) {
+    const item = items.find(function (i) { return i.id === id; });
+    if (!item) return;
+    selectedId = id;
+    renderDetail(item);
+    consoleEl.hidden = true;
+    detailEl.hidden = false;
+    renderList();
+    revealSide();
+  }
+
+  function closeDetail() {
+    selectedId = null;
+    detailEl.hidden = true;
+    consoleEl.hidden = false;
+    renderList();
+    revealSide();
+  }
+
+  // 重新提取/清空时收起解析
+  function resetSelection() {
+    selectedId = null;
+    detailEl.hidden = true;
+    consoleEl.hidden = false;
   }
 
   function renderList() {
@@ -238,6 +305,7 @@
     const text = chatEl.value;
     if (!text.trim()) {
       items = [];
+      resetSelection();
       renderAll();
       setActiveTab();
       setHint('先把群聊记录贴进来，再点提取。', 'warn');
@@ -246,6 +314,7 @@
     const r = extractAll(text);
     items = r.items;
     filter = 'todo';
+    resetSelection();
     renderAll();
     setActiveTab();
     if (items.length === 0) {
@@ -265,6 +334,7 @@
     items = [];
     filter = 'todo';
     setHint('');
+    resetSelection();
     renderAll();
     setActiveTab();
     save();
@@ -273,6 +343,8 @@
   tabEls.forEach(function (t) {
     t.addEventListener('click', function () {
       filter = t.dataset.filter;
+      // 切标签后选中项可能不在当前列表里，收起解析避免「面板有内容但没选中项」
+      if (selectedId) resetSelection();
       setActiveTab();
       renderList();
     });
@@ -289,22 +361,23 @@
       item.done = e.target.checked;
       save();
       renderSummary();
+      if (selectedId === id) renderDetail(item);
       renderList();
-      return;
-    }
-    if (e.target.classList.contains('why-toggle')) {
-      const why = itemEl.querySelector('.why');
-      why.hidden = !why.hidden;
-      e.target.textContent = why.hidden ? '为什么' : '收起';
       return;
     }
     if (e.target.classList.contains('del')) {
       if (!window.confirm('删除这条待办？')) return;
       items = items.filter(function (i) { return i.id !== id; });
+      if (selectedId === id) resetSelection();
       save();
       renderAll();
+      return;
     }
+    if (selectedId === id) closeDetail();
+    else selectItem(id);
   });
+
+  detailCloseBtn.addEventListener('click', closeDetail);
 
   const exportBtn = document.getElementById('export');
   exportBtn.addEventListener('click', function () {
