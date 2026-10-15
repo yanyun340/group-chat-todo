@@ -2,6 +2,10 @@
    背景着色器：主题四色在暖纸底上缓慢晕染漂移 + 细纸噪点。
    原生 WebGL，无依赖。不支持 WebGL 时静默退化为纯 CSS 底色。
    尊重 prefers-reduced-motion：只渲染一帧静止画面。
+
+   注意：改 canvas.width/height 会重置 WebGL 上下文状态
+   （program / buffer / attribute 绑定全部丢失、drawing buffer 清空），
+   所以 resize 时必须重新绑定，并立即重绘一帧。
    ============================================================ */
 (function () {
   'use strict';
@@ -77,7 +81,6 @@
   gl.attachShader(prog, fs);
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
-  gl.useProgram(prog);
 
   // 全屏四边形（两个三角形）
   var buf = gl.createBuffer();
@@ -88,12 +91,26 @@
   ]), gl.STATIC_DRAW);
 
   var loc = gl.getAttribLocation(prog, 'a');
-  gl.enableVertexAttribArray(loc);
-  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-
   var uRes = gl.getUniformLocation(prog, 'u_res');
   var uTime = gl.getUniformLocation(prog, 'u_time');
   var uMouse = gl.getUniformLocation(prog, 'u_mouse');
+  var mouse = new Float32Array([-1, -1]); // 初始屏幕外，无光晕
+
+  // canvas 尺寸改变会重置 context 状态，把绑定收成一个函数，resize 时重放
+  function bindState() {
+    gl.useProgram(prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  }
+  bindState();
+
+  function draw(time) {
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mouse[0], mouse[1]);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
 
   function resize() {
     // 用 CSS 像素（不乘 DPR）：纯渐变/色斑，低分辨率视觉无损，省 GPU
@@ -102,17 +119,11 @@
     canvas.width = w;
     canvas.height = h;
     gl.viewport(0, 0, w, h);
+    bindState();          // 尺寸改变重置了状态，重新绑定
+    if (reduce) draw(0);  // 静止模式下无 rAF 循环，resize 后必须手动重绘，否则黑屏
   }
   window.addEventListener('resize', resize);
   resize();
-
-  var mouse = new Float32Array([-1, -1]); // 初始屏幕外，无光晕
-  function draw(time) {
-    gl.uniform2f(uRes, canvas.width, canvas.height);
-    gl.uniform1f(uTime, time);
-    gl.uniform2f(uMouse, mouse[0], mouse[1]);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-  }
 
   if (reduce) {
     draw(0); // 静止一帧
