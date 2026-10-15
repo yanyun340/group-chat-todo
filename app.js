@@ -364,11 +364,8 @@
       return;
     }
     if (e.target.classList.contains('del')) {
-      if (!window.confirm('删除这条待办？')) return;
-      items = items.filter(function (i) { return i.id !== id; });
-      if (selectedId === id) resetSelection();
-      save();
-      renderAll();
+      lastDelBtn = e.target;
+      openDeleteDialog(item);
       return;
     }
     if (selectedId === id) closeDetail();
@@ -376,6 +373,58 @@
   });
 
   detailCloseBtn.addEventListener('click', closeDetail);
+
+  // ---- 删除确认：先弹警告，确认后条目「跳出去」再移除 ----
+  const deleteDialogEl = document.getElementById('delete-dialog');
+  const deletePreviewEl = document.getElementById('delete-dialog__preview');
+  const deleteCancelBtn = document.getElementById('delete-cancel');
+  const deleteConfirmBtn = document.getElementById('delete-confirm');
+  let pendingDeleteId = null;
+  let lastDelBtn = null;
+  const ITEM_OUT_MS = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 260;
+
+  function openDeleteDialog(item) {
+    pendingDeleteId = item.id;
+    deletePreviewEl.textContent = item.text;
+    deleteDialogEl.hidden = false;
+    deleteCancelBtn.focus(); // 危险操作：默认焦点落在「取消」上，避免误触回车即删
+  }
+
+  function closeDeleteDialog() {
+    deleteDialogEl.hidden = true;
+    pendingDeleteId = null;
+    if (lastDelBtn) { lastDelBtn.focus(); lastDelBtn = null; }
+  }
+
+  function removeItem(id) {
+    items = items.filter(function (i) { return i.id !== id; });
+    if (selectedId === id) resetSelection();
+    save();
+    renderAll();
+  }
+
+  function confirmDelete() {
+    const id = pendingDeleteId;
+    if (!id) return;
+    const itemEl = listEl.querySelector('.item[data-id="' + id + '"]');
+    lastDelBtn = null; // 条目即将移除，无需把焦点还给已消失的按钮
+    closeDeleteDialog();
+    if (itemEl) {
+      itemEl.classList.add('item--leaving');
+      window.setTimeout(function () { removeItem(id); }, ITEM_OUT_MS);
+    } else {
+      removeItem(id);
+    }
+  }
+
+  deleteCancelBtn.addEventListener('click', closeDeleteDialog);
+  deleteConfirmBtn.addEventListener('click', confirmDelete);
+  deleteDialogEl.addEventListener('click', function (e) {
+    if (e.target.hasAttribute('data-close')) closeDeleteDialog();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!deleteDialogEl.hidden && e.key === 'Escape') closeDeleteDialog();
+  });
 
   const exportBtn = document.getElementById('export');
   exportBtn.addEventListener('click', function () {
