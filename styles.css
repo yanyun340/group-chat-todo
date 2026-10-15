@@ -55,17 +55,15 @@ body {
   overflow-x: hidden;
 }
 
-/* ---- 斜向撞色背景带（不对称的底色，压淡不抢戏）---- */
+/* ---- 着色器背景（WebGL 晕染漂移；无 WebGL 时退化为纯纸底）---- */
 .bg {
   position: fixed;
   inset: 0;
   z-index: -1;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  background:
-    linear-gradient(160deg, transparent 0 60%, var(--acid) 60% 64%, transparent 64%) no-repeat;
-  background-size: 100% 55%;
-  background-position: 0 115%;
-  opacity: 0.35;
+  background: var(--paper);
 }
 
 /* ---- 顶栏 ---- */
@@ -143,10 +141,12 @@ body {
   font-size: clamp(56px, 12.5vw, 168px);
   line-height: 0.95;
   letter-spacing: -0.04em;
-  /* 撞色描边制造"不和谐"的立体感 */
-  -webkit-text-stroke: 2px var(--ink);
   color: var(--ink);
-  text-shadow: 6px 6px 0 var(--acid);
+  /* 3D 挤出：两层黑色厚底 + 芥末黄投影，字从纸上"鼓"出来 */
+  text-shadow:
+    3px 3px 0 var(--ink),
+    6px 6px 0 var(--ink),
+    9px 9px 0 var(--acid);
 }
 
 .hero__row {
