@@ -188,7 +188,7 @@ body {
   align-items: start;
 }
 .col { min-width: 0; }
-.col--side { padding-top: 44px; }  /* 刻意错位，打破对齐 */
+.col--side { position: sticky; top: 16px; }  /* 吸顶：点哪条，解析面板都在旁边 */
 
 /* ---- 卡片 ---- */
 .box {
@@ -555,7 +555,7 @@ textarea:focus { background: var(--white); }
   .page { padding: 0 20px; }
   .topbar { margin: 16px 16px 0; }
   .layout { grid-template-columns: 1fr; gap: 22px; }
-  .col--side { padding-top: 0; }
+  .col--side { position: static; }
   .title { font-size: clamp(46px, 17vw, 88px); }
   .stats { grid-template-columns: 1fr 1fr; }
   .stat--big { grid-row: span 2; }

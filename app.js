@@ -334,12 +334,7 @@
   quickstartBtn.addEventListener('click', function () { chatEl.value = SAMPLE_CHAT; doExtract(); });
   clearBtn.addEventListener('click', function () {
     chatEl.value = '';
-    items = [];
-    filter = 'todo';
     setHint('');
-    resetSelection();
-    renderAll();
-    setActiveTab();
     save();
   });
 
