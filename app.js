@@ -158,7 +158,8 @@
 
   function itemHTML(item) {
     const cls = item.done ? 'done' : item.state;
-    const selected = item.id === selectedId ? ' item--selected' : '';
+    const isSelected = item.id === selectedId;
+    const selected = isSelected ? ' item--selected' : '';
     const typeKey = item.type || 'task';
     const type = '<span class="chip chip--type chip--type-' + typeKey + '">' + TYPE_LABEL[typeKey] + '</span>';
     const deadline = item.deadline ? '<span class="chip chip--deadline">' + escapeHTML(item.deadline) + '</span>' : '';
@@ -170,7 +171,7 @@
         '<div class="body">' +
           '<div class="text">' + escapeHTML(item.text) + '</div>' +
           '<div class="meta">' + type + deadline + me + source +
-            '<span class="item__more">解析 ›</span>' +
+            '<span class="item__more">' + (isSelected ? '收起 ⌃' : '解析 ›') + '</span>' +
           '</div>' +
         '</div>' +
         '<button type="button" class="del" title="删除">删除</button>' +
