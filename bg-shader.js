@@ -26,6 +26,7 @@
     'precision mediump float;',
     'uniform vec2 u_res;',
     'uniform float u_time;',
+    'uniform vec2 u_mouse;',
     'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
     'float noise(vec2 p){',
     '  vec2 i=floor(p),f=fract(p);',
@@ -48,6 +49,9 @@
     '  q=p+vec2(cos(t),sin(t*1.3))*.6;d=length(q-vec2(1.35,.70));col=mix(col,c2,smoothstep(.85,0.,d)*.18);',
     '  q=p+vec2(sin(t*.8),cos(t*1.1))*.5;d=length(q-vec2(.90,1.30));col=mix(col,c3,smoothstep(.80,0.,d)*.16);',
     '  q=p+vec2(cos(t*1.2),sin(t*.7))*.55;d=length(q-vec2(1.60,.20));col=mix(col,c4,smoothstep(.70,0.,d)*.18);',
+    '  vec2 m=vec2(u_mouse.x*u_res.x/u_res.y,u_mouse.y);',
+    '  float dm=length(p-m);',
+    '  col=mix(col,c1,smoothstep(.45,0.,dm)*.12);',   // 鼠标附近淡芥末黄微光
     '  float n=noise(p*300.);',
     '  col+=(n-.5)*.025;',              // 细纸噪点
     '  gl_FragColor=vec4(col,1.);',
@@ -89,6 +93,7 @@
 
   var uRes = gl.getUniformLocation(prog, 'u_res');
   var uTime = gl.getUniformLocation(prog, 'u_time');
+  var uMouse = gl.getUniformLocation(prog, 'u_mouse');
 
   function resize() {
     // 用 CSS 像素（不乘 DPR）：纯渐变/色斑，低分辨率视觉无损，省 GPU
@@ -101,15 +106,25 @@
   window.addEventListener('resize', resize);
   resize();
 
+  var mouse = new Float32Array([-1, -1]); // 初始屏幕外，无光晕
   function draw(time) {
     gl.uniform2f(uRes, canvas.width, canvas.height);
     gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mouse[0], mouse[1]);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
   if (reduce) {
     draw(0); // 静止一帧
     return;
+  }
+
+  // 鼠标光晕：只在有精确指针（鼠标/触控板）时启用，触屏不跟手
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    window.addEventListener('pointermove', function (e) {
+      mouse[0] = e.clientX / window.innerWidth;
+      mouse[1] = 1 - e.clientY / window.innerHeight;
+    }, { passive: true });
   }
 
   var raf;

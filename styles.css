@@ -300,6 +300,7 @@ textarea:focus { background: var(--white); }
   grid-template-columns: 1.55fr 1fr 1fr;
   gap: 12px;
   margin-bottom: 22px;
+  perspective: 900px;
 }
 
 .stat {
@@ -331,7 +332,7 @@ textarea:focus { background: var(--white); }
 .stat__num { display: block; font-family: var(--mono); font-weight: 700; font-size: 34px; line-height: 1; }
 
 @media (hover: hover) and (pointer: fine) {
-  .stat:hover { transform: translate(-2px, -2px); }
+  .stat:hover { transform: translate(-2px, -2px) rotateX(5deg) rotateY(-7deg); }
 }
 
 /* ---- 列表盒 ---- */
