@@ -51,7 +51,7 @@
     '  q=p+vec2(cos(t*1.2),sin(t*.7))*.55;d=length(q-vec2(1.60,.20));col=mix(col,c4,smoothstep(.70,0.,d)*.18);',
     '  vec2 m=vec2(u_mouse.x*u_res.x/u_res.y,u_mouse.y);',
     '  float dm=length(p-m);',
-    '  col=mix(col,c1,smoothstep(.45,0.,dm)*.12);',   // 鼠标附近淡芥末黄微光
+    '  col=mix(col,c1,smoothstep(.7,0.,dm)*.28);',   // 鼠标附近芥末黄微光
     '  float n=noise(p*300.);',
     '  col+=(n-.5)*.025;',              // 细纸噪点
     '  gl_FragColor=vec4(col,1.);',
