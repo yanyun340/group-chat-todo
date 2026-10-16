@@ -402,7 +402,8 @@
   const deleteConfirmBtn = document.getElementById('delete-confirm');
   let pendingDeleteId = null;
   let lastDelBtn = null;
-  const ITEM_OUT_MS = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 260;
+  const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ITEM_OUT_MS = REDUCE_MOTION ? 0 : 300;
 
   function openDeleteDialog(item) {
     pendingDeleteId = item.id;
@@ -424,6 +425,49 @@
     renderAll();
   }
 
+  // 剩余条目平滑让位（FLIP）：先记下各自位置 → 重排 → 从旧位置补间回新位置
+  function captureTops() {
+    const map = new Map();
+    listEl.querySelectorAll('.item').forEach(function (el) {
+      map.set(el.dataset.id, el.getBoundingClientRect().top);
+    });
+    return map;
+  }
+
+  function animateLetWay(before) {
+    const els = Array.from(listEl.querySelectorAll('.item'));
+    const moved = [];
+    // 1) 批量读：量出每条要走的位移（读写分开，避免 layout thrashing）
+    els.forEach(function (el) {
+      const prev = before.get(el.dataset.id);
+      if (prev == null) return;
+      const dy = prev - el.getBoundingClientRect().top;
+      if (Math.abs(dy) >= 1) moved.push({ el: el, dy: dy });
+    });
+    if (!moved.length) return;
+    // 2) 批量写：瞬时挪回旧位置（先关掉过渡）
+    moved.forEach(function (m) {
+      m.el.style.transition = 'none';
+      m.el.style.transform = 'translateY(' + m.dy + 'px)';
+    });
+    // 3) 强制一次重排，让"旧位置"这一帧真正落实。
+    //    否则最后一条写完后没有读操作去 flush，浏览器认为它没有起始值，直接瞬移。
+    void listEl.offsetHeight;
+    // 4) 下一帧打开过渡、清掉位移，补间回真实位置
+    requestAnimationFrame(function () {
+      moved.forEach(function (m) {
+        m.el.style.transition = 'transform 340ms cubic-bezier(0.23, 1, 0.32, 1)';
+        m.el.style.transform = '';
+      });
+      window.setTimeout(function () {
+        moved.forEach(function (m) {
+          m.el.style.transition = '';
+          m.el.style.transform = '';
+        });
+      }, 380);
+    });
+  }
+
   function confirmDelete() {
     const id = pendingDeleteId;
     if (!id) return;
@@ -432,7 +476,11 @@
     closeDeleteDialog();
     if (itemEl) {
       itemEl.classList.add('item--leaving');
-      window.setTimeout(function () { removeItem(id); }, ITEM_OUT_MS);
+      window.setTimeout(function () {
+        const before = REDUCE_MOTION ? null : captureTops();
+        removeItem(id);
+        if (before) animateLetWay(before);
+      }, ITEM_OUT_MS);
     } else {
       removeItem(id);
     }

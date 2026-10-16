@@ -359,10 +359,23 @@ textarea:focus { background: var(--white); }
   border: none;
   border-right: 2px solid var(--ink);
   cursor: pointer;
-  transition: background 140ms var(--ease-out), color 140ms var(--ease-out);
+  position: relative;
+  z-index: 0;
+  transition: background 140ms var(--ease-out), color 140ms var(--ease-out),
+              transform 220ms var(--ease-out), opacity 220ms var(--ease-out),
+              box-shadow 220ms var(--ease-out);
 }
 .tab:last-child { border-right: none; }
-.tab.active { background: var(--ink); color: var(--white); }
+/* 未选中项压低，给选中项腾出视觉分量 */
+.tabs .tab:not(.active) { opacity: 0.72; }
+/* 选中项从行里「鼓」出来：抬起 + 微放大 + 硬阴影，邻居自然让位 */
+.tab.active {
+  background: var(--ink);
+  color: var(--white);
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: var(--shadow-sm);
+  z-index: 1;
+}
 
 .summary { margin: 14px 0 0; font-size: 13px; color: var(--weak); font-family: var(--mono); }
 
@@ -616,14 +629,15 @@ textarea:focus { background: var(--white); }
   78%  { opacity: 1; transform: translateY(3px) scale(0.99); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-/* 条目被删时「跳出去」：先向前一挺，再翻着跌出 */
+/* 条目被删时沿弧线甩出去：先后仰蓄力，再划一道弧跌出视线 */
 @keyframes itemOut {
   0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
-  45%  { opacity: 1; transform: translate(-6px, -8px) rotate(-2deg) scale(1.06); }
-  100% { opacity: 0; transform: translate(18px, 22px) rotate(3deg) scale(0.9); }
+  28%  { opacity: 1; transform: translate(-9px, -11px) rotate(-3deg) scale(1.05); }
+  64%  { opacity: 1; transform: translate(8px, -5px) rotate(1.5deg) scale(1.01); }
+  100% { opacity: 0; transform: translate(38px, 28px) rotate(8deg) scale(0.84); }
 }
 .item--leaving {
-  animation: itemOut 260ms var(--ease-out) both;
+  animation: itemOut 300ms var(--ease-out) both;
   pointer-events: none;
 }
 
