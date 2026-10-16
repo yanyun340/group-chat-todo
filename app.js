@@ -402,8 +402,12 @@
   const deleteConfirmBtn = document.getElementById('delete-confirm');
   let pendingDeleteId = null;
   let lastDelBtn = null;
-  const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const ITEM_OUT_MS = REDUCE_MOTION ? 0 : 400;
+  // 读取时机很关键：不能在加载时把结果快照成常量。
+  // 用户可能开着页面才去系统里打开动画效果——那时 CSS 媒体查询会实时恢复，
+  // 但快照常量仍是旧值，就会出现"其他动效都好了、只有删除直接瞬逝"。
+  const reduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function prefersReduce() { return reduceMQ.matches; }
+  const ITEM_OUT_MS = 400;
 
   function openDeleteDialog(item) {
     pendingDeleteId = item.id;
@@ -475,12 +479,13 @@
     lastDelBtn = null; // 条目即将移除，无需把焦点还给已消失的按钮
     closeDeleteDialog();
     if (itemEl) {
+      const reduce = prefersReduce();
       itemEl.classList.add('item--leaving');
       window.setTimeout(function () {
-        const before = REDUCE_MOTION ? null : captureTops();
+        const before = reduce ? null : captureTops();
         removeItem(id);
         if (before) animateLetWay(before);
-      }, ITEM_OUT_MS);
+      }, reduce ? 0 : ITEM_OUT_MS);
     } else {
       removeItem(id);
     }
