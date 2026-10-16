@@ -177,12 +177,13 @@
     const deadline = item.deadline ? '<span class="chip chip--deadline">' + escapeHTML(item.deadline) + '</span>' : '';
     const source = item.source ? '<span class="source">' + escapeHTML(item.source) + '</span>' : '';
     const me = item.relevant ? '<span class="chip chip--me">与你相关</span>' : '';
+    const imported = importedAt ? '<span class="imported">导入于 ' + fmtDate(importedAt) + '</span>' : '';
     return '' +
       '<li class="item item--' + cls + selected + '" data-id="' + item.id + '">' +
         '<input type="checkbox" class="done-toggle"' + (item.done ? ' checked' : '') + '>' +
         '<div class="body">' +
           '<div class="text">' + escapeHTML(item.text) + '</div>' +
-          '<div class="meta">' + type + deadline + me + source +
+          '<div class="meta">' + type + deadline + me + source + imported +
             '<span class="item__more">' + (isSelected ? '收起 ⌃' : '解析 ›') + '</span>' +
           '</div>' +
         '</div>' +
@@ -283,7 +284,7 @@
     const base = open.length === 0
       ? '都清完了。'
       : (confirm > 0 ? '有 ' + confirm + ' 条拿不准，已单独放进「待确认」' : '全部条目都可以直接执行');
-    summaryEl.textContent = base + (importedAt ? ' · 导入于 ' + fmtDate(importedAt) : '');
+    summaryEl.textContent = base;
   }
 
   function renderAll() {

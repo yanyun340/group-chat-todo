@@ -398,6 +398,7 @@ textarea:focus { background: var(--white); }
 }
 .list .item--selected .text { color: var(--white); }
 .list .item--selected .source { color: var(--paper-2); }
+.list .item--selected .imported { color: var(--paper-2); }
 .list .item--selected .item__more { color: var(--acid); }
 
 .done-toggle {
@@ -451,6 +452,7 @@ textarea:focus { background: var(--white); }
 .item--selected .chip { border-color: var(--white); }
 
 .source { font-size: 12.5px; color: var(--weak); }
+.imported { font-size: 12px; font-family: var(--mono); color: var(--weak); }
 
 .item__more { font-size: 12.5px; font-family: var(--mono); color: var(--weak); }
 
