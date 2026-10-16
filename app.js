@@ -4,10 +4,11 @@
   // ===== 提取规则：集中在这里，改规则只动这一处 =====
   const ACTION_WORDS = ['提交', '别忘了', '别忘', '报名', '完成', '通知', '安排', '参加', '回复', '填写', '上传', '打印', '准备', '开会', '考试', '截止', '提醒', '缴费', '领取', '收集', '签到', '必须', '须', '交', '做', '写', '带'];
   const WEAK_WORDS = ['到时候', '要不要', '再说', '记得', '可能', '有空', '考虑', '要不', '也许', '大概', '想', '看看', '如果', '以后'];
-  const TIME_RE = /((?:今天|明天|后天|今晚|明早|明晚|这周|下周|周末|周[一二三四五六日天]|星期[一二三四五六日天])(?:上午|下午|晚上|中午|早|晚)?(?:\d{1,2}[:：]\d{2}|\d{1,2}点|\d{1,2}[日号])?|\d{1,2}[.月/]\d{1,2}[日号]?|\d{1,2}[日号])(?:之前|前|截止)?/;
+  const TIME_RE = /((?:今天|明天|后天|今晚|明早|明晚|下周[一二三四五六日天]|这周[一二三四五六日天]|上周[一二三四五六日天]|这周|下周|上周|周末|周[一二三四五六日天]|星期[一二三四五六日天])(?:上午|下午|晚上|中午|早|晚)?(?:\d{1,2}[:：]\d{2}|\d{1,2}点|\d{1,2}[日号])?|\d{1,2}[.月/]\d{1,2}[日号]?|\d{1,2}[日号])(?:之前|前|截止)?/;
   const MENTION_RE = /@(?:我|全体成员|全体|所有人|大家|all)/i;
   const COLLECTIVE_WORDS = ['我班', '我们班', '全班', '本班', '各位同学', '同学们', '全体同学', '全体成员', '请大家', '所有人', '各位'];
   const REQUEST_WORDS = ['谁有', '帮忙', '帮我', '帮一下', '借我', '借一下', '发我', '发一下', '请问', '麻烦', '谁能', '有没有人'];
+  const CHOICE_RE = /[一二三四五六七八九十两\d]+选[一二三四五六七八九十两\d]+/g;  // 「三选一 / 五选一」这类选一约束
   const STORAGE_KEY = 'group-chat-todo:v1';
 
   const SAMPLE_CHAT = [
@@ -54,6 +55,7 @@
   let items = [];
   let filter = 'todo';
   let selectedId = null;
+  let importedAt = null; // 最近一次成功导入（提取）的时间戳
 
   // ---- 解析一行：昵称 时间 内容 / 昵称: 内容 / 纯内容 ----
   function parseLine(line) {
@@ -88,6 +90,15 @@
     let action = null;
     for (const w of ACTION_WORDS) { if (content.includes(w)) { action = w; break; } }
     if (action) { reasons.push('关键词「' + action + '」'); highlights.push(action); }
+
+    // 「三选一 / 五选一」这类选一约束：列进解析，帮人看懂这条任务到底要几选几
+    const choices = content.match(CHOICE_RE);
+    if (choices) {
+      choices.forEach(function (c) {
+        reasons.push('选择「' + c + '」');
+        highlights.push(c);
+      });
+    }
 
     let reqWord = null;
     for (const w of REQUEST_WORDS) { if (content.includes(w)) { reqWord = w; break; } }
@@ -253,6 +264,12 @@
     listEl.innerHTML = visible.map(itemHTML).join('');
   }
 
+  function fmtDate(ts) {
+    const d = new Date(ts);
+    const p = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
   function renderSummary() {
     const open = items.filter(function (i) { return !i.done; });
     const todo = open.filter(function (i) { return i.state === 'todo'; }).length;
@@ -263,9 +280,10 @@
     statRelevantEl.textContent = relevant;
     statConfirmEl.textContent = confirm;
     statDoneEl.textContent = done;
-    summaryEl.textContent = open.length === 0
+    const base = open.length === 0
       ? '都清完了。'
       : (confirm > 0 ? '有 ' + confirm + ' 条拿不准，已单独放进「待确认」' : '全部条目都可以直接执行');
+    summaryEl.textContent = base + (importedAt ? ' · 导入于 ' + fmtDate(importedAt) : '');
   }
 
   function renderAll() {
@@ -288,7 +306,7 @@
   // ---- 持久化 ----
   function save() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ chat: chatEl.value, items: items }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ chat: chatEl.value, items: items, importedAt: importedAt }));
     } catch (e) { /* 隐私模式等场景忽略 */ }
   }
 
@@ -299,6 +317,7 @@
       const data = JSON.parse(raw);
       if (data.chat != null) chatEl.value = data.chat;
       if (Array.isArray(data.items)) items = data.items;
+      if (data.importedAt != null) importedAt = data.importedAt;
     } catch (e) { /* 损坏则忽略 */ }
   }
 
@@ -317,6 +336,7 @@
     items = r.items;
     filter = 'todo';
     resetSelection();
+    importedAt = items.length ? Date.now() : null; // 有结果才记录导入时间
     renderAll();
     setActiveTab();
     if (items.length === 0) {
