@@ -403,7 +403,7 @@
   let pendingDeleteId = null;
   let lastDelBtn = null;
   const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const ITEM_OUT_MS = REDUCE_MOTION ? 0 : 300;
+  const ITEM_OUT_MS = REDUCE_MOTION ? 0 : 400;
 
   function openDeleteDialog(item) {
     pendingDeleteId = item.id;

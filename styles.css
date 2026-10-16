@@ -336,6 +336,10 @@ textarea:focus { background: var(--white); }
 }
 
 /* ---- 列表盒 ---- */
+/* 裁掉条目飞出去的越界部分，让「甩出列表」读起来是滑出盒子而不是溢出到页面上。
+   内边距 22px 足够容纳静止态/选中态/悬停态的硬阴影（最大 7px）。 */
+.listbox { overflow: hidden; }
+
 .listbox__head {
   display: flex;
   align-items: center;
@@ -629,15 +633,25 @@ textarea:focus { background: var(--white); }
   78%  { opacity: 1; transform: translateY(3px) scale(0.99); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-/* 条目被删时沿弧线甩出去：先后仰蓄力，再划一道弧跌出视线 */
+/* 条目被删时沿弧线滑出列表：
+   列表条目是「宽而扁」的（约 7:1），旋转会被放大成"整行歪掉"，所以几乎不旋转——
+   曲线靠 X/Y 路径本身表达：向右滑出的同时下沉，后半程明显下坠，划出一道弧。
+   向上不做位移，避免撞到上方的标签/摘要；越界部分由 .listbox 裁掉。 */
 @keyframes itemOut {
-  0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
-  28%  { opacity: 1; transform: translate(-9px, -11px) rotate(-3deg) scale(1.05); }
-  64%  { opacity: 1; transform: translate(8px, -5px) rotate(1.5deg) scale(1.01); }
-  100% { opacity: 0; transform: translate(38px, 28px) rotate(8deg) scale(0.84); }
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    animation-timing-function: cubic-bezier(0.35, 0, 0.75, 1);
+  }
+  45% {
+    opacity: 1;
+    transform: translate(140px, 26px) rotate(0.5deg) scale(0.99);
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  100% { opacity: 0; transform: translate(420px, 165px) rotate(1.4deg) scale(0.94); }
 }
 .item--leaving {
-  animation: itemOut 300ms var(--ease-out) both;
+  animation: itemOut 400ms both;
   pointer-events: none;
 }
 
