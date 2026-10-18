@@ -39,6 +39,10 @@
   --shadow-lg: 9px 9px 0 var(--ink);
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* 视图翻转的两半：easeInQuad / easeOutQuad（easings.net）。
+     转出加速、转入减速，接缝处速度正好接上，拼成一次 180° 翻转。 */
+  --ease-flip-out: cubic-bezier(0.11, 0, 0.5, 0);
+  --ease-flip-in: cubic-bezier(0.5, 1, 0.89, 0.67);
 }
 
 * { box-sizing: border-box; }
@@ -240,6 +244,7 @@ textarea:focus { background: var(--white); }
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
+  white-space: nowrap;
   font-family: var(--body);
   font-size: 14.5px;
   font-weight: 600;
@@ -353,6 +358,30 @@ textarea:focus { background: var(--white); }
    position: relative 是给垃圾桶做定位上下文（它钉在盒子左下角）。 */
 .listbox { position: relative; overflow: hidden; }
 
+/* 列表 / 日历切换：整张卡片绕 Y 轴翻转，在侧面看不见时换内容。
+   两段时长和 app.js 里的 150 / 190ms 对齐；只动 transform 和 opacity。 */
+.listbox.is-flip-out,
+.listbox.is-flip-in {
+  transform-origin: center center;
+  pointer-events: none;
+}
+.listbox.is-flip-out {
+  animation: viewFlipOut 150ms var(--ease-flip-out) both;
+}
+.listbox.is-flip-in {
+  animation: viewFlipIn 190ms var(--ease-flip-in) both;
+}
+@keyframes viewFlipOut {
+  0%   { opacity: 1; transform: perspective(2400px) rotateY(0deg); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: perspective(2400px) rotateY(calc(var(--flip-dir, 1) * 90deg)); }
+}
+@keyframes viewFlipIn {
+  0%   { opacity: 0; transform: perspective(2400px) rotateY(calc(var(--flip-dir, 1) * -90deg)); }
+  30%  { opacity: 0.55; }
+  100% { opacity: 1; transform: perspective(2400px) rotateY(0deg); }
+}
+
 .listbox__head {
   display: flex;
   align-items: center;
@@ -394,7 +423,7 @@ textarea:focus { background: var(--white); }
   z-index: 1;
 }
 
-.listbox__tools { display: flex; align-items: center; gap: 8px; }
+.listbox__tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 
 .summary { margin: 14px 0 0; font-size: 13px; color: var(--weak); font-family: var(--mono); }
 
@@ -590,6 +619,10 @@ body.is-dropping .col--results {
 .chip--state-done { background: var(--line-soft); color: var(--ink); }
 
 .item--selected .chip { border-color: var(--white); }
+/* 反色行里，墨色底的「与你相关」会整块融进背景；AI 的靛蓝底也偏暗。
+   这里把这两种标签翻成浅底深字，保证选中时还读得清。 */
+.item--selected .chip--me { background: var(--white); color: var(--ink); }
+.item--selected .chip--ai { background: var(--acid); color: var(--ink); }
 
 .source { font-size: 12.5px; color: var(--weak); }
 .imported { font-size: 12px; font-family: var(--mono); color: var(--weak); }
@@ -613,6 +646,368 @@ body.is-dropping .col--results {
 .item--selected .del { background: transparent; color: var(--white); border-color: var(--white); }
 
 .empty { padding: 32px 12px; text-align: center; color: var(--weak); font-family: var(--mono); }
+
+/* ---- 日历视图 ---- */
+/* 日历不是另一个数据表，是同一批条目的时间视角：
+   有日期的进月历，认不出日期的进「未排期」，两边点开都是同一个解析面板。 */
+.calendar { margin-top: 16px; }
+.calendar[hidden] { display: none; }
+
+/* 日历模式下，状态标签和列表专属工具让位；AI 设置和导出仍可用。 */
+.listbox.is-calendar .tabs,
+.listbox.is-calendar .summary,
+.listbox.is-calendar #list,
+.listbox.is-calendar .trash,
+.listbox.is-calendar .batchbar { display: none; }
+.listbox.is-calendar .js-list-only { display: none; }
+
+.cal__head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cal__month {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+}
+.cal__navbtn {
+  width: 34px;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  border: none;
+  border-right: 2px solid var(--ink);
+  font-family: var(--mono);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 120ms var(--ease-out);
+}
+.cal__navbtn:last-child { border-right: none; }
+.cal__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 118px;
+  padding: 0 12px;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 17px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cal__navbtn:hover { background: var(--acid); }
+}
+
+.cal__done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--weak);
+  cursor: pointer;
+}
+.cal__done input,
+.cal-check {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  background: var(--white);
+  border: 2px solid var(--ink);
+  cursor: pointer;
+  position: relative;
+}
+.cal__done input:checked,
+.cal-check:checked { background: var(--mint); }
+.cal__done input:checked::after,
+.cal-check:checked::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: var(--ink);
+  clip-path: polygon(14% 44%, 0 62%, 46% 100%, 100% 12%, 84% 0, 42% 68%);
+}
+.cal__done input:focus-visible,
+.cal-check:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.cal__meta { margin: 8px 0 10px; font-family: var(--mono); font-size: 12px; color: var(--weak); }
+
+.cal__weekdays,
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+.cal__weekdays { margin-top: 12px; }
+.cal__weekdays span {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--weak);
+}
+.cal__weekdays .cal__weekend { color: var(--pink); }
+
+.cal__day {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: 6px;
+  background-color: var(--day-bg, var(--white));
+  background-image: var(--day-hatch, none);
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+  font-family: var(--mono);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms var(--ease-out), background-color 120ms var(--ease-out),
+              box-shadow 120ms var(--ease-out);
+}
+.cal__day--blank { visibility: hidden; pointer-events: none; }
+
+/* 工作量底纹：越黄越挤。周末空着时压成纸灰，和不忙的工作日区分开。
+   数据落成 data-load（0/1/2/3），颜色只在这里定义，JS 不拼色值。 */
+.cal__day[data-load="1"] { --day-bg: #FBF7EA; }
+.cal__day[data-load="2"] { --day-bg: #F4E8C8; }
+.cal__day[data-load="3"] { --day-bg: #EFDCA4; }
+.cal__day.is-weekend[data-load="0"] { --day-bg: var(--paper-2); }
+/* 过去的日期打斜纹：一眼看出「已经翻篇」，但不盖掉过期红边和选中态。 */
+.cal__day.is-past {
+  --day-hatch: repeating-linear-gradient(45deg, transparent 0 5px, rgba(20, 20, 20, 0.05) 5px 6px);
+}
+
+.cal__num { align-self: flex-start; font-size: 13px; font-weight: 700; line-height: 1; }
+.cal__day.is-today .cal__num {
+  padding: 1px 4px;
+  margin: -1px 0 0 -4px;
+  background: var(--acid);
+}
+
+/* 底部读数：最多三根小柱（按状态着色）+ 确切条数。条数比「+n」准确，
+   3 条以上也还能看出颜色构成。 */
+.cal__load { display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; min-height: 12px; }
+.cal__bars { display: flex; align-items: flex-end; gap: 3px; height: 12px; }
+.cal__bar { flex: none; width: 4px; height: 10px; background: var(--mint); }
+.cal__bars .cal__bar { height: 100%; }
+.cal__bar--confirm { background: var(--orange); }
+.cal__bar--done { background: var(--line-soft); }
+.cal__bar--overdue { background: var(--red); }
+.cal__count { font-size: 10px; font-weight: 700; line-height: 1; color: var(--ink); }
+
+/* 过期用「内阴影红边」而不是加粗底边：不改变格子高度，行列不会因为哪天过期而轻微错位。 */
+.cal__day.is-overdue { box-shadow: inset 0 -4px 0 var(--red); }
+.cal__day.is-selected {
+  background: var(--ink);
+  color: var(--white);
+  box-shadow: 3px 3px 0 var(--acid);
+}
+.cal__day.is-selected.is-overdue {
+  box-shadow: 3px 3px 0 var(--acid), inset 0 -4px 0 var(--pink);
+}
+.cal__day.is-selected .cal__num {
+  padding: 1px 4px;
+  margin: -1px 0 0 -4px;
+  background: var(--acid);
+  color: var(--ink);
+}
+.cal__day.is-selected .cal__count { color: var(--paper-2); }
+.cal__day.is-selected .cal__bar { outline: 1px solid rgba(255, 255, 255, 0.55); }
+.cal__day.is-selected .cal__bar--done { background: var(--weak); }
+.cal__day:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .cal__day:not(.cal__day--blank):hover {
+    transform: translate(-1px, -1px);
+    box-shadow: var(--shadow-sm);
+  }
+  .cal__day.is-overdue:hover {
+    box-shadow: var(--shadow-sm), inset 0 -4px 0 var(--red);
+  }
+  .cal__day.is-selected:hover { box-shadow: 4px 4px 0 var(--acid); }
+  .cal__day.is-selected.is-overdue:hover {
+    box-shadow: 4px 4px 0 var(--acid), inset 0 -4px 0 var(--pink);
+  }
+}
+
+.cal__legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--weak);
+}
+.cal__legend span { display: inline-flex; align-items: center; gap: 5px; }
+.cal__legend-overdue { color: var(--red); }
+
+.cal__section { margin-top: 20px; padding-top: 14px; border-top: 2px solid var(--ink); }
+.cal__section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.cal__section-title { margin: 0; font-family: var(--display); font-weight: 900; font-size: 17px; }
+.cal__section-count { font-family: var(--mono); font-size: 12px; color: var(--weak); }
+
+/* 选中日：把「几月几日星期几」拆成日期戳。
+   大数字先被眼睛接住，月份和星期退成注脚——比一整行同字号的小标题更像日历。 */
+.cal__dayhead { align-items: center; }
+.cal__daystamp { display: flex; align-items: center; gap: 10px; margin: 0; min-width: 0; }
+.cal__daynum {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 34px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+.cal__daymeta { display: flex; flex-direction: column; gap: 1px; line-height: 1.15; }
+.cal__daymonth { font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; }
+.cal__dayweek { font-family: var(--mono); font-size: 10.5px; color: var(--weak); }
+
+/* 当月切换的方向感：新月份从翻页的那一侧轻轻推入。
+   只动 transform / opacity，200ms，不拖住点击。 */
+.cal__grid.is-slide-next { animation: calSlideNext 200ms var(--ease-out) both; }
+.cal__grid.is-slide-prev { animation: calSlidePrev 200ms var(--ease-out) both; }
+@keyframes calSlideNext {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes calSlidePrev {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.cal__hint { margin: 6px 0 0; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--weak); }
+.cal__hint[hidden] { display: none; }
+
+.cal-list { list-style: none; margin: 8px 0 0; padding: 0; }
+
+/* 当天安排走一条竖向时间轴：左边一根细线，每条待办一个状态色节点。
+   只占 22px 槽位，320 宽下条目仍然放得下；节点颜色跟条目左边框同源（--state）。
+   空白天没有内容可排，就把线收掉，只留虚线框。 */
+.cal-list--timeline { position: relative; padding-left: 22px; }
+.cal-list--timeline::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: var(--ink);
+  opacity: 0.16;
+}
+.cal-list--timeline:has(.cal-empty)::before { display: none; }
+.cal-list--timeline .cal-item { position: relative; }
+.cal-list--timeline .cal-item::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 18px;
+  width: 7px;
+  height: 7px;
+  background: var(--node, var(--state, var(--paper)));
+  border: 1.5px solid var(--ink);
+}
+.cal-list--timeline .cal-empty { margin-left: -22px; }
+
+.cal-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 10px;
+  background: var(--white);
+  border: 1.5px solid var(--ink);
+  border-left-width: 5px;
+  transition: transform 140ms var(--ease-out), background 120ms var(--ease-out),
+              box-shadow 120ms var(--ease-out);
+}
+.cal-item--todo { --state: var(--mint); border-left-color: var(--state); }
+.cal-item--confirm { --state: var(--orange); border-left-color: var(--state); }
+.cal-item--done { --state: var(--line-soft); border-left-color: var(--state); }
+.cal-item--overdue { --node: var(--red); background: #FBEDE8; }
+.cal-item--selected {
+  background: var(--ink);
+  color: var(--white);
+  box-shadow: 3px 3px 0 var(--acid);
+}
+.cal-item--selected .cal-check { background: var(--paper); }
+
+@media (hover: hover) and (pointer: fine) {
+  .cal-item:not(.cal-item--selected):hover {
+    transform: translate(-1px, -1px);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.cal-item__open {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cal-item__open:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.cal-item__text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.cal-item--done .cal-item__text { color: var(--weak); text-decoration: line-through; }
+.cal-item--selected .cal-item__text { color: var(--white); }
+.cal-item__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--weak);
+}
+.cal-item--selected .cal-item__meta { color: var(--paper-2); }
+.cal-item__tag {
+  padding: 0 5px;
+  background: var(--mint);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+.cal-item__tag--confirm { background: var(--orange); color: var(--white); }
+.cal-item__tag--done { background: var(--line-soft); }
+.cal-item--selected .cal-item__tag { border-color: var(--white); }
+.cal-item__manual { color: var(--blue); font-weight: 700; }
+.cal-item--selected .cal-item__manual { color: var(--acid); }
+.cal-item__overdue { color: var(--red); }
+.cal-item--selected .cal-item__overdue { color: #FF9B8A; }
+/* 空白日：虚线框 + 斜纹 + 一道破折号，像是日历上「特意空出来」的一格，
+   而不是忘了渲染。和忙日的实线卡片形成对照。 */
+.cal-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 64px;
+  margin-top: 8px;
+  padding: 14px 10px;
+  background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(20, 20, 20, 0.025) 8px 9px);
+  border: 1.5px dashed var(--line-soft);
+  text-align: center;
+  color: var(--weak);
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+.cal-empty::before { content: "—"; color: var(--line-soft); font-weight: 700; }
 
 /* ---- 批量操作条（多选模式的工具栏）---- */
 /* 频率：偶发。目的是 state indication——把"现在处于多选"和"选了几条"讲清楚。
@@ -732,6 +1127,7 @@ body.is-dragging .trash--over {
   border-top: 2px dashed var(--line-soft);
 }
 .detail__label {
+  display: block;
   margin: 0 0 8px;
   font-family: var(--mono);
   font-size: 12px;
@@ -740,6 +1136,30 @@ body.is-dragging .trash--over {
   color: var(--weak);
 }
 .detail__reasons { margin: 0; padding-left: 20px; }
+
+/* 日历排期：原生日期选择器已经够用，不引第三方日历组件。
+   原文截止说法在标签/原文里保留，这里只决定「放到日历哪一天」。 */
+.detail__date-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.detail__date-row input[type="date"] {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 10px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  outline: none;
+  transition: background 140ms var(--ease-out);
+}
+.detail__date-row input[type="date"]:focus { background: var(--white); }
+.detail__date-note {
+  margin: 7px 0 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--weak);
+}
 .detail__reasons li { margin: 4px 0; }
 
 /* 条件：一条规则一行，「如果… → 就…」左右分开，扫一行就知道这条规则管什么。
@@ -874,13 +1294,68 @@ body.is-dragging .trash--over {
   overflow: hidden;
 }
 
-.dialog__actions { display: flex; gap: 10px; justify-content: flex-end; }
+.dialog__actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.dialog__actions .btn { white-space: nowrap; }
 
 .btn--danger {
   background: var(--red);
   color: var(--white);
   box-shadow: var(--shadow-sm);
 }
+
+/* ---- AI 提取（可选增强）----
+   配好 AI 后由它直接整理群聊；没有 key 时走本地规则，不联网、不拦路。
+   AI 的每条输出都要通过「原文证据」校验才会进列表。 */
+.ai-note {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--weak);
+}
+.ai-note[hidden] { display: none; }
+.ai-note--ok { color: #0E7A44; }
+.ai-note--warn { color: var(--amber); }
+
+/* AI 直接提取出来的条目，给一个可检索的标记；原文证据在「解析」里。 */
+.chip--ai { background: var(--blue); color: var(--white); }
+
+/* 设置弹窗 */
+.dialog__card--wide { max-width: 540px; }
+.dialog__body--sm { font-size: 13.5px; color: var(--weak); }
+.field { display: block; margin: 0 0 12px; }
+.field__label {
+  display: block;
+  margin-bottom: 5px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--weak);
+}
+.field input,
+.field select {
+  width: 100%;
+  padding: 9px 11px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  outline: none;
+  transition: background 140ms var(--ease-out);
+}
+.field input:focus,
+.field select:focus { background: var(--white); }
+.ai-why {
+  margin: 0 0 14px;
+  min-height: 18px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--weak);
+}
+.dialog__actions--split { align-items: center; justify-content: flex-start; }
+.dialog__spacer { flex: 1; }
 
 /* ---- 动效：只用 transform / opacity ---- */
 @keyframes rise {
@@ -982,9 +1457,15 @@ body.is-dragging .trash--over {
   body.is-dragging .trash { transform: none; }
   body.is-dragging .trash--over { transform: none; }
   .undo { transition: opacity 200ms ease; transform: translate(-50%, 0); }
-  .btn, .btn__icon, .tab, .item, .stat, .pick, .done-toggle, textarea { transition-duration: 1ms; }
+  .btn, .btn__icon, .tab, .item, .stat, .pick, .done-toggle, textarea,
+  .field input, .field select, .cal__day, .cal-item, .cal__navbtn, .cal-check,
+  .detail__date-row input { transition-duration: 1ms; }
   .btn:active, .btn:hover { transform: none; }
-  .item:hover, .stat:hover { transform: none; }
+  .item:hover, .stat:hover, .cal__day:hover, .cal-item:hover { transform: none; }
+  /* 视图切换交给 JS 直接落定，CSS 动画兜底关掉 */
+  .listbox.is-flip-out, .listbox.is-flip-in { animation: none; }
+  /* 月份切换同理：JS 的 prefersReduce() 会跳过，CSS 再兜一层 */
+  .cal__grid.is-slide-next, .cal__grid.is-slide-prev { animation: none; }
 }
 
 /* ---- 响应式 ---- */
@@ -1006,4 +1487,38 @@ body.is-dragging .trash--over {
   .stat--big { grid-row: auto; min-height: 0; }
   .stat--big .stat__num { font-size: 52px; }
   .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  /* 320px 下工具栏只剩约 232px：收紧间距和按钮内边距，
+     让「列表 / AI / 导出」仍然排在一行，不留下一个孤零零的按钮。 */
+  .listbox__tools { gap: 6px; }
+  .btn--sm { padding: 6px 10px; }
+
+  /* 320px 下 7 列只剩约 30px 一格：收紧间距和字号，保证日期和状态点都还读得清。 */
+  .cal__head { gap: 8px; }
+  .cal__label { min-width: 94px; padding: 0 8px; font-size: 15px; }
+  .cal__navbtn { width: 30px; font-size: 18px; }
+  .cal__done { margin-left: 0; }
+  .cal__weekdays, .cal__grid { gap: 4px; }
+  .cal__day { min-height: 48px; padding: 4px; }
+  .cal__num { font-size: 11px; }
+  .cal__load { min-height: 10px; gap: 1px; }
+  .cal__bars { height: 10px; gap: 2px; }
+  .cal__bar { width: 3px; }
+  /* 每格内宽只剩 ~20px：最多两根柱子 + 数字，第三根会把数字顶出格子。 */
+  .cal__bars .cal__bar:nth-child(n+3) { display: none; }
+  .cal__count { font-size: 9px; }
+  .cal__day.is-today .cal__num,
+  .cal__day.is-selected .cal__num { padding: 0 2px; margin: 0; }
+
+  .cal__dayhead { align-items: center; }
+  .cal__daystamp { gap: 8px; }
+  .cal__daynum { font-size: 28px; }
+  .cal__daymonth { font-size: 10.5px; }
+  .cal__dayweek { font-size: 9.5px; }
+
+  /* 时间轴槽位收窄到 18px，给条目正文多留一点 */
+  .cal-list--timeline { padding-left: 18px; }
+  .cal-list--timeline::before { left: 4px; top: 16px; bottom: 16px; }
+  .cal-list--timeline .cal-item::before { left: -16px; top: 16px; width: 6px; height: 6px; }
+  .cal-list--timeline .cal-empty { margin-left: -18px; }
 }

@@ -15,7 +15,7 @@
     <span class="brand">话里有事<span class="brand__star" aria-hidden="true">*</span></span>
     <span class="topbar__tags">
       <span class="tag tag--acid">本地运行</span>
-      <span class="tag">不联网 · 不接模型</span>
+      <span class="tag">本地规则 · AI 可选</span>
     </span>
   </header>
 
@@ -61,7 +61,7 @@
             </div>
           </div>
 
-          <div class="box listbox">
+          <div class="box listbox" id="listbox">
             <div class="listbox__head">
               <nav class="tabs" aria-label="按状态筛选">
                 <button type="button" class="tab active" data-filter="todo">待办</button>
@@ -69,8 +69,13 @@
                 <button type="button" class="tab" data-filter="done">已完成</button>
               </nav>
               <div class="listbox__tools">
-                <button type="button" id="select-mode" class="btn btn--ghost btn--sm" aria-pressed="false">多选</button>
-                <button type="button" id="done-all" class="btn btn--ghost btn--sm">全部完成</button>
+                <button type="button" id="view-toggle" class="btn btn--ghost btn--sm" aria-pressed="false" title="切换到日历视图">
+                  <span id="view-toggle-icon" aria-hidden="true">▦</span>
+                  <span id="view-toggle-label">日历</span>
+                </button>
+                <button type="button" id="ai-settings" class="btn btn--ghost btn--sm" title="AI 设置" aria-label="AI 设置"><span aria-hidden="true">⚙</span> AI</button>
+                <button type="button" id="select-mode" class="btn btn--ghost btn--sm js-list-only" aria-pressed="false">多选</button>
+                <button type="button" id="done-all" class="btn btn--ghost btn--sm js-list-only">全部完成</button>
                 <button type="button" id="export" class="btn btn--ghost btn--sm">导出 JSON</button>
               </div>
             </div>
@@ -87,7 +92,61 @@
             </div>
 
             <p id="summary" class="summary"></p>
+            <p id="ai-note" class="ai-note" hidden role="status" aria-live="polite"></p>
             <ul id="list" class="list"></ul>
+
+            <!-- 日历视图：同一批待办的时间视角。月历里只放已排期的条目；
+                 原文日期认不出来的留在「未排期」，点开可手动排期。 -->
+            <section class="calendar" id="calendar" hidden aria-label="待办日历">
+              <div class="cal__head">
+                <div class="cal__month">
+                  <button type="button" class="cal__navbtn" id="cal-prev" aria-label="上个月">‹</button>
+                  <span class="cal__label" id="cal-label" aria-live="polite">—</span>
+                  <button type="button" class="cal__navbtn" id="cal-next" aria-label="下个月">›</button>
+                </div>
+                <button type="button" class="btn btn--ghost btn--sm" id="cal-today">今天</button>
+                <label class="cal__done">
+                  <input type="checkbox" id="cal-show-done" checked>
+                  显示已完成
+                </label>
+              </div>
+              <p class="cal__meta" id="cal-meta"></p>
+
+              <div class="cal__weekdays" aria-hidden="true">
+                <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span class="cal__weekend">六</span><span class="cal__weekend">日</span>
+              </div>
+              <div class="cal__grid" id="cal-grid" role="group" aria-label="月历"></div>
+
+              <div class="cal__legend" aria-hidden="true">
+                <span><i class="cal__bar"></i>待办</span>
+                <span><i class="cal__bar cal__bar--confirm"></i>待确认</span>
+                <span><i class="cal__bar cal__bar--done"></i>已完成</span>
+                <span class="cal__legend-overdue">红条 = 已过期</span>
+              </div>
+
+              <div class="cal__section">
+                <div class="cal__section-head cal__dayhead">
+                  <h3 class="cal__daystamp" id="cal-day-label">
+                    <span class="cal__daynum" id="cal-day-num">—</span>
+                    <span class="cal__daymeta">
+                      <span class="cal__daymonth" id="cal-day-month">—</span>
+                      <span class="cal__dayweek" id="cal-day-week"></span>
+                    </span>
+                  </h3>
+                  <span class="cal__section-count" id="cal-day-count"></span>
+                </div>
+                <ul class="cal-list cal-list--timeline" id="cal-day-list"></ul>
+              </div>
+
+              <div class="cal__section">
+                <div class="cal__section-head">
+                  <h3 class="cal__section-title">未排期</h3>
+                  <span class="cal__section-count" id="cal-unscheduled-count"></span>
+                </div>
+                <p class="cal__hint" id="cal-unscheduled-hint">原文里没识别出具体日期的条目会留在这里，点开可手动排期。</p>
+                <ul class="cal-list" id="cal-unscheduled-list"></ul>
+              </div>
+            </section>
 
             <!-- 拖拽放置目标：手柄拖动时的删除区。纯指针交互（键盘/读屏走批量删除按钮） -->
             <div class="trash" id="trash" hidden aria-hidden="true">
@@ -131,6 +190,14 @@
           <p class="detail__text" id="detail-text"></p>
           <div class="detail__meta" id="detail-meta"></div>
           <div class="detail__block">
+            <label class="detail__label" for="detail-date">日历排期</label>
+            <div class="detail__date-row">
+              <input type="date" id="detail-date">
+              <button type="button" class="btn btn--ghost btn--sm" id="detail-date-clear">清除</button>
+            </div>
+            <p class="detail__date-note" id="detail-date-note"></p>
+          </div>
+          <div class="detail__block">
             <p class="detail__label">提取依据</p>
             <ul class="detail__reasons" id="detail-reasons"></ul>
           </div>
@@ -152,7 +219,7 @@
     </div>
 
     <footer class="foot">
-      <p>演示数据均为合成数据 · 数据只存在本浏览器 · 不联网、不接模型</p>
+      <p>演示数据均为合成数据 · 数据只存在本浏览器 · 默认不联网；配置 AI 后，提取时会把这段群聊记录发给你填写的服务</p>
     </footer>
   </main>
 
@@ -174,6 +241,50 @@
       <div class="dialog__actions">
         <button type="button" class="btn btn--ghost" id="delete-cancel">取消</button>
         <button type="button" class="btn btn--danger" id="delete-confirm">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 设置：可选增强。没有配置时，页面行为与纯本地版完全一致。
+       Key 只写进本浏览器的 localStorage，不写进代码、仓库或导出文件。 -->
+  <div class="dialog" id="ai-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="ai-dialog__title">
+    <div class="dialog__backdrop" data-ai-close aria-hidden="true"></div>
+    <div class="dialog__card dialog__card--wide" role="document">
+      <h2 class="dialog__title" id="ai-dialog__title">AI 提取设置</h2>
+      <p class="dialog__body dialog__body--sm">AI 是可选的。不配置时，全部功能由本地规则完成。配置保存后，点「提取待办」会把整段群聊直接交给 AI 整理成待办，结果写进列表；每条都会在「解析」里给出原文证据。密钥只保存在这个浏览器的 localStorage 里，不写进代码、仓库或导出文件；提取时，这段群聊记录会发送到你下面填写的服务。</p>
+
+      <label class="field">
+        <span class="field__label">服务商</span>
+        <select id="ai-provider">
+          <option value="deepseek">DeepSeek</option>
+          <option value="openai">OpenAI</option>
+          <option value="ollama">本地 Ollama</option>
+          <option value="custom">自定义（OpenAI 兼容）</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field__label">接口地址</span>
+        <input type="text" id="ai-base" spellcheck="false" autocomplete="off" placeholder="https://api.deepseek.com">
+      </label>
+
+      <label class="field">
+        <span class="field__label">模型</span>
+        <input type="text" id="ai-model" spellcheck="false" autocomplete="off" placeholder="deepseek-chat">
+      </label>
+
+      <label class="field">
+        <span class="field__label">API Key</span>
+        <input type="password" id="ai-key" spellcheck="false" autocomplete="off" placeholder="sk-…（本地 Ollama 可留空）">
+      </label>
+
+      <p class="ai-why" id="ai-dialog-status" role="status" aria-live="polite"></p>
+
+      <div class="dialog__actions dialog__actions--split">
+        <button type="button" class="btn btn--ghost btn--sm" id="ai-test">测试连接</button>
+        <span class="dialog__spacer"></span>
+        <button type="button" class="btn btn--ghost" id="ai-cancel">关闭</button>
+        <button type="button" class="btn btn--primary" id="ai-save">保存</button>
       </div>
     </div>
   </div>
