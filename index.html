@@ -68,10 +68,38 @@
                 <button type="button" class="tab" data-filter="confirm">待确认</button>
                 <button type="button" class="tab" data-filter="done">已完成</button>
               </nav>
-              <button type="button" id="export" class="btn btn--ghost btn--sm">导出 JSON</button>
+              <div class="listbox__tools">
+                <button type="button" id="select-mode" class="btn btn--ghost btn--sm" aria-pressed="false">多选</button>
+                <button type="button" id="done-all" class="btn btn--ghost btn--sm">全部完成</button>
+                <button type="button" id="export" class="btn btn--ghost btn--sm">导出 JSON</button>
+              </div>
             </div>
+
+            <!-- 多选模式下的批量操作条，只在开启多选时出现 -->
+            <div class="batchbar" id="batchbar" hidden>
+              <span class="batchbar__count" id="batch-count">已选 0 条</span>
+              <div class="batchbar__actions">
+                <button type="button" id="batch-all" class="btn btn--ghost btn--sm">全选</button>
+                <button type="button" id="batch-done" class="btn btn--ghost btn--sm">标记完成</button>
+                <button type="button" id="batch-delete" class="btn btn--danger btn--sm">删除</button>
+                <button type="button" id="batch-exit" class="btn btn--ghost btn--sm">取消</button>
+              </div>
+            </div>
+
             <p id="summary" class="summary"></p>
             <ul id="list" class="list"></ul>
+
+            <!-- 拖拽放置目标：手柄拖动时的删除区。纯指针交互（键盘/读屏走批量删除按钮） -->
+            <div class="trash" id="trash" hidden aria-hidden="true">
+              <svg class="trash__icon" viewBox="0 0 24 24" focusable="false">
+                <path d="M4 7h16M9.5 7V4.5h5V7M6.2 7l1 12.1A1.9 1.9 0 0 0 9.1 21h5.8a1.9 1.9 0 0 0 1.9-1.9L18 7"
+                      fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M10.2 11v6M13.8 11v6" fill="none" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <span class="trash__label">拖入删除</span>
+            </div>
+
+            <p id="list-status" class="sr-only" role="status" aria-live="polite"></p>
           </div>
         </section>
       </section>
@@ -106,9 +134,18 @@
             <p class="detail__label">提取依据</p>
             <ul class="detail__reasons" id="detail-reasons"></ul>
           </div>
+          <div class="detail__block" id="detail-cond-block" hidden>
+            <p class="detail__label">条件</p>
+            <ul class="detail__conds" id="detail-conds"></ul>
+          </div>
           <div class="detail__block">
             <p class="detail__label">原文</p>
             <p class="detail__source" id="detail-source"></p>
+            <button type="button" id="detail-raw-btn" class="btn btn--ghost btn--sm" aria-expanded="false" aria-controls="detail-raw" hidden>打开原文</button>
+            <div class="rawwrap" id="detail-raw" hidden>
+              <p class="detail__label" id="detail-raw-label"></p>
+              <p class="detail__source detail__source--line" id="detail-raw-text"></p>
+            </div>
           </div>
         </section>
       </aside>
@@ -118,6 +155,13 @@
       <p>演示数据均为合成数据 · 数据只存在本浏览器 · 不联网、不接模型</p>
     </footer>
   </main>
+
+  <!-- 拖进垃圾桶删除后给一条撤回机会。
+       「删除」按钮走的是下面的二次确认弹窗，所以不需要这个——确认过的删除就是终局。 -->
+  <div class="undo" id="undo" hidden role="status" aria-live="polite">
+    <span class="undo__text" id="undo-text"></span>
+    <button type="button" class="btn btn--sm" id="undo-btn">撤销</button>
+  </div>
 
   <!-- 删除确认弹窗：警告 + 跳出动效 -->
   <div class="dialog" id="delete-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="delete-dialog__title">

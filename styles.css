@@ -13,6 +13,7 @@
   --white: #FFFFFF;
 
   --acid: #D9B64A;    /* 芥末黄 */
+  --acid-soft: #F5E7BC; /* 芥末黄的浅版：多选选中行的底 */
   --blue: #3B4C9E;    /* 靛蓝 */
   --blue-ink: #FFFFFF;
   --pink: #CB6E5E;    /* 陶土 */
@@ -269,6 +270,14 @@ textarea:focus { background: var(--white); }
 
 .btn--ghost { box-shadow: var(--shadow-sm); }
 .btn--sm { padding: 6px 12px; font-size: 13px; }
+/* 「多选」是个开关，开着的时候按钮本身要看得出来 */
+.btn.is-on { background: var(--ink); color: var(--white); }
+.btn:disabled {
+  cursor: default;
+  opacity: 0.42;
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
 
 @media (hover: hover) and (pointer: fine) {
   .btn:hover { transform: translate(-2px, -2px); }
@@ -291,6 +300,9 @@ textarea:focus { background: var(--white); }
   text-align: left;
   background: var(--white);
 }
+/* [hidden] 是 UA 样式表里的 display:none，作者样式里的 display:flex 会盖掉它，
+   所以这里必须显式补一条，否则提取成功后空态卡不会消失、跟结果叠在一起。 */
+.placeholder[hidden] { display: none; }
 .placeholder__title { margin: 0; font-family: var(--display); font-weight: 900; font-size: 28px; }
 .placeholder__sub { margin: 0; color: var(--weak); max-width: 440px; line-height: 1.7; }
 
@@ -337,8 +349,9 @@ textarea:focus { background: var(--white); }
 
 /* ---- 列表盒 ---- */
 /* 裁掉条目飞出去的越界部分，让「甩出列表」读起来是滑出盒子而不是溢出到页面上。
-   内边距 22px 足够容纳静止态/选中态/悬停态的硬阴影（最大 7px）。 */
-.listbox { overflow: hidden; }
+   内边距 22px 足够容纳静止态/选中态/悬停态的硬阴影（最大 7px）。
+   position: relative 是给垃圾桶做定位上下文（它钉在盒子左下角）。 */
+.listbox { position: relative; overflow: hidden; }
 
 .listbox__head {
   display: flex;
@@ -381,10 +394,73 @@ textarea:focus { background: var(--white); }
   z-index: 1;
 }
 
+.listbox__tools { display: flex; align-items: center; gap: 8px; }
+
 .summary { margin: 14px 0 0; font-size: 13px; color: var(--weak); font-family: var(--mono); }
 
+/* 屏幕阅读器可见、视觉不可见：只用来播报拖拽排序的结果 */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* ---- 列表 ---- */
+/* 底部留出垃圾桶那一行，最后一条不会被它压住 */
+/* 垃圾桶改成流内元素后，这里不再需要给它预留 56px */
 .list { list-style: none; margin: 6px 0 0; padding: 0; }
+
+/* 拖拽把手：点阵握把。整行太宽，用整行做拖拽会跟"点击选中"打架，所以给一个明确的手柄。 */
+.drag {
+  flex: none;
+  width: 16px;
+  height: 26px;
+  margin-top: 2px;
+  cursor: grab;
+  touch-action: none; /* 触屏上按住手柄拖动时不要顺带滚页面 */
+  border-radius: 3px;
+  background-image: radial-gradient(var(--ink) 1.1px, transparent 1.2px);
+  background-size: 5px 5px;
+  background-position: 1px 2px;
+  opacity: 0.3;
+  transition: opacity 160ms var(--ease-out), background-color 160ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .drag:hover { opacity: 0.7; background-color: var(--paper-2); }
+}
+.drag:focus-visible { opacity: 1; outline: 2px solid var(--ink); outline-offset: 2px; }
+/* 深色选中态下，墨色点阵看不见，换成纸色 */
+.item--selected .drag { background-image: radial-gradient(var(--paper-2) 1.1px, transparent 1.2px); }
+
+/* 被拖起来的那条：脱离列表流，抬起（硬阴影加大）——宽而扁的行用旋转会读成"整行歪掉"，所以不旋转 */
+.item--dragging {
+  position: relative;
+  z-index: 6;
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+}
+.item--dragging, .item--dragging * { cursor: grabbing; }
+.item--dragging .drag { opacity: 0.9; }
+body.is-dragging { user-select: none; }
+/* 拖拽时条目可能被拖到列表外，先解除 .listbox 的裁剪（它平时是为"滑出列表"服务的）。
+   is-dropping 是「松手后飞进垃圾桶」那 300ms——那一段也要保持不裁剪。 */
+body.is-dragging .listbox,
+body.is-dropping .listbox { overflow: visible; }
+
+/* 拖拽时把结果列整体抬到右侧「输入台」之上。
+   .console / .col--results / .col--side 都挂着 `animation: rise ... both`，
+   而 rise 动的是 opacity + transform——fill-mode 的 both 让动画**永久处于生效状态**，
+   于是这三个都成了永久 stacking context。被拖的条目 z-index 再高也被困在
+   .col--results 内部出不去，而 .col--side 在 DOM 里更靠后、两者又同处 z-index:0
+   那一层，所以条目一拖到输入台上就会被它盖住。只能在"列"这一层把顺序翻过来。 */
+body.is-dragging .col--results,
+body.is-dropping .col--results {
+  position: relative;
+  z-index: 5;
+}
 
 .item {
   display: flex;
@@ -397,7 +473,8 @@ textarea:focus { background: var(--white); }
   border-left-width: 8px;
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: transform 140ms var(--ease-out);
+  transition: transform 140ms var(--ease-out), background 120ms var(--ease-out),
+              box-shadow 120ms var(--ease-out);
 }
 .item--todo { border-left-color: var(--mint); }
 .item--confirm { border-left-color: var(--orange); }
@@ -405,6 +482,15 @@ textarea:focus { background: var(--white); }
 
 @media (hover: hover) and (pointer: fine) {
   .item:hover { transform: translate(-2px, -2px); }
+}
+
+/* 多选模式：整行变成"可勾选"，所以不再有"点开解析"的暗示 */
+.item--select .item__more { display: none; }
+
+/* 多选选中的行：浅芥末底 + 芥末硬阴影，跟"反色=正在看解析"区分开 */
+.item--picked {
+  background: var(--acid-soft);
+  box-shadow: 3px 3px 0 var(--acid);
 }
 
 /* 选中：反色 + 实心阴影加大，一眼锁定 */
@@ -441,9 +527,43 @@ textarea:focus { background: var(--white); }
 }
 .item--selected .done-toggle { background: var(--paper); }
 
+/* 多选的勾选框：刻意跟「完成」的勾不一样——这里是实心方块，不是对勾。
+   两个框在一行里从不同时出现，但语义得一眼分得开。 */
+.pick {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  border: 2px solid var(--ink);
+  background: var(--white);
+  cursor: pointer;
+  position: relative;
+  transition: background 120ms var(--ease-out);
+}
+.pick:checked { background: var(--acid); }
+.pick:checked::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: var(--ink);
+}
+.pick:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
 .body { flex: 1; min-width: 0; }
 
-.item .text { font-size: 15px; line-height: 1.5; }
+/* 列表里的文字只留两行——待办台是拿来扫的，不是拿来读的。
+   一条真实的班级通知能把行撑到三行半，扫十条就得滚屏。
+   全文在右边的「解析」里，一个字都不会丢。 */
+.item .text {
+  font-size: 15px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .item--done .text { color: var(--weak); text-decoration: line-through; }
 
 .meta { display: flex; align-items: center; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
@@ -461,6 +581,9 @@ textarea:focus { background: var(--white); }
 .chip--type-task { background: var(--mint); }
 .chip--type-reminder { background: var(--acid); }
 .chip--type-request { background: var(--pink); color: var(--white); }
+/* 「说明」刻意不抢眼：纸底 + 虚线描边，跟三种实心撞色的"要做什么"分开。
+   它不是第四种行动类型，是"这条不是给行动用的"这个信号本身。 */
+.chip--type-note { background: var(--white); border-style: dashed; color: var(--weak); }
 .chip--deadline { background: var(--blue); color: var(--white); }
 .chip--me { background: var(--ink); color: var(--white); }
 .chip--state { background: var(--orange); color: var(--white); }
@@ -491,6 +614,114 @@ textarea:focus { background: var(--white); }
 
 .empty { padding: 32px 12px; text-align: center; color: var(--weak); font-family: var(--mono); }
 
+/* ---- 批量操作条（多选模式的工具栏）---- */
+/* 频率：偶发。目的是 state indication——把"现在处于多选"和"选了几条"讲清楚。
+   用一次入场动画（display 切换会重放），不做退场：退出多选时整条直接消失才好，
+   因为那一刻用户的注意力在"选中的条目恢复原样"上。 */
+.batchbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: var(--acid);
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow-sm);
+  animation: rise 220ms var(--ease-out) both;
+}
+.batchbar[hidden] { display: none; }
+.batchbar__count { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+.batchbar__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.batchbar .btn { box-shadow: none; }
+.batchbar .btn:disabled { transform: none; }
+
+/* ---- 垃圾桶：拖拽的放置目标 ---- */
+/* 频率：罕发（只有真的想删东西时才会拖过去）。目的：spatial consistency——
+   把条目"送进"一个明确的地方，比松手后弹窗问一遍更符合动作本身的含义。
+   静息态安静但**可读**；拖拽一开始就"醒来"，否则用户根本不知道可以往这儿拖。
+
+   静息态的形：实心描边 + 小硬阴影。最早写成虚线 + 整体 65% 透明，
+   想着"虚线=可以往这儿放"，结果截图里它读起来是"没做完的占位符 / 被禁用的按钮"，
+   跟页面里空态卡的虚线语言撞了。本主题里"真实物件"的标志是实心描边 + 硬阴影，
+   所以静息态保留这两样、只把颜色压软；靠**降低对比**而不是**降低透明度**来退让，
+   标签才始终读得清——可读性就是可发现性。
+   两级反馈：拖拽开始 = 描边/阴影转黑（醒来）；瞄准 = 变红放大（张开嘴）。 */
+.trash {
+  /* sticky 而不是 absolute：absolute 会让桶钉死在列表盒子的最下沿，
+     贴一段真实群聊很容易出 20+ 条，盒子比视口还长，桶就被推到屏幕外，
+     而拖拽用了 pointer capture、过程中没法滚动——那条路就彻底走不通了。
+     sticky + bottom 的取巧之处：盒子没超出视口时，流内位置本身就满足约束，
+     桶待在原地不动（没有跳变）；盒子一旦超出视口，它才自动钉到视口底边。
+     全程只是"贴着"而不是"跳过去"。 */
+  position: sticky;
+  bottom: 20px;
+  width: fit-content;
+  margin: 4px 0 20px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--white);
+  border: 2px solid rgba(20, 20, 20, 0.28);
+  box-shadow: 3px 3px 0 rgba(20, 20, 20, 0.12);
+  color: var(--weak);
+  pointer-events: none;
+  transform-origin: left bottom;
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out),
+              background 180ms var(--ease-out), color 180ms var(--ease-out),
+              border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+.trash[hidden] { display: none; }
+.trash__icon { display: block; width: 18px; height: 18px; }
+.trash__label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.02em; white-space: nowrap; }
+
+body.is-dragging .trash {
+  opacity: 1;
+  transform: scale(1);
+  color: var(--ink);
+  border-style: solid;
+  border-color: var(--ink);
+  box-shadow: var(--shadow);
+  /* 被拖的条目是 z-index 6，会整个盖住垃圾桶。
+     但"瞄准"的反馈必须看得见——目标比被拖的东西重要，所以把桶抬到它上面。 */
+  z-index: 7;
+}
+/* 瞄准态：变红 + 放大 + 歪一点，用"张开嘴"的姿态确认"松手就进去了" */
+body.is-dragging .trash--over {
+  background: var(--red);
+  color: var(--white);
+  transform: scale(1.12) rotate(-3deg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ---- 撤销条 ---- */
+/* 拖进垃圾桶是明确意图，不再弹二次确认；但删除本身不可逆，所以给一条限时撤回。
+   用 transition 而非 keyframes：连删几条时事件会重入，transition 能从当前值续上，
+   keyframes 会从 0 重播，连续触发时会闪。进场自下方、退场回下方，路径对称。 */
+.undo {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px 10px 16px;
+  background: var(--ink);
+  color: var(--white);
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translate(-50%, 14px);
+  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+}
+.undo[hidden] { display: none; }
+.undo--on { opacity: 1; transform: translate(-50%, 0); }
+.undo__text { font-size: 14px; }
+.undo .btn { background: var(--acid); color: var(--ink); box-shadow: none; }
+
 /* ---- 解析面板 ---- */
 .detail__text { margin: 0 0 18px; font-family: var(--display); font-weight: 700; font-size: 18px; line-height: 1.5; }
 .detail__meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -510,6 +741,22 @@ textarea:focus { background: var(--white); }
 }
 .detail__reasons { margin: 0; padding-left: 20px; }
 .detail__reasons li { margin: 4px 0; }
+
+/* 条件：一条规则一行，「如果… → 就…」左右分开，扫一行就知道这条规则管什么。
+   用等宽字体 + 左侧硬竖线，跟上面纯文字的依据列表区分开。 */
+.detail__conds { margin: 0; padding: 0; list-style: none; }
+.detail__conds li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0 6px 10px;
+  border-left: 3px solid var(--acid);
+  font-size: 13.5px;
+}
+.detail__conds li + li { margin-top: 6px; }
+.cond__when { color: var(--ink); }
+.cond__arrow { flex: none; font-family: var(--mono); color: var(--weak); }
+.cond__then { font-weight: 600; }
 .detail__source {
   margin: 0;
   padding: 12px 14px;
@@ -522,6 +769,28 @@ textarea:focus { background: var(--white); }
   background: var(--acid);
   color: var(--ink);
   padding: 0 2px;
+}
+/* 「打开原文」展开出来的那一行，和上面的「原文」块区分开：
+   它是**别人写的原话**，所以纸底再暗一档、字再小一点。 */
+.detail__source--line { background: var(--white); font-size: 13px; }
+
+/* 展开 / 收起只动 opacity + transform（都在合成层）。
+   收起时反着播一遍同样的路，不额外写一套"退出动画"。 */
+.rawwrap {
+  margin-top: 10px;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+}
+.rawwrap.raw--on { opacity: 1; transform: translateY(0); }
+/* [hidden] 是 UA 样式表里的 display:none，作者样式里的 display:inline-flex 会盖掉它
+   （和 .placeholder / .batchbar / .trash 同一处坑），所以要点名关掉 */
+.detail__block .btn[hidden] { display: none; }
+.rawwrap[hidden] { display: none; }
+.detail__source + .btn { margin-top: 10px; }
+@media (prefers-reduced-motion: reduce) {
+  .rawwrap { transform: none; transition: opacity 120ms linear; }
+  .rawwrap.raw--on { transform: none; }
 }
 
 /* ---- 页脚 ---- */
@@ -655,6 +924,36 @@ textarea:focus { background: var(--white); }
   pointer-events: none;
 }
 
+/* 批量完成：多条待办依次"落下"。
+   勾选框弹一下（transform，合成层）+ 整行底色闪一下（background，paint）。
+   底色是 paint 动画，只允许出现在这种小面积、一次性、且同一时刻只有一行在跑的场合；
+   单条勾选不加任何动画——那是高频动作，加了只会觉得卡。 */
+@keyframes checkDrop {
+  0% { transform: scale(0.72); }
+  55% { transform: scale(1.16); }
+  100% { transform: scale(1); }
+}
+@keyframes rowTick {
+  0% { background: var(--mint); }
+  100% { background: var(--white); }
+}
+.item--checking .done-toggle { animation: checkDrop 300ms var(--ease-out) both; }
+.item--checking { animation: rowTick 300ms var(--ease-out) both; }
+
+/* 批量完成后依次退场。刻意跟"删除"的弧线区分开：
+   删除是向右甩出（东西没了），完成是原地淡出（事情了了），方向不同、含义不同。
+   这里只动 opacity，不动 transform——因为某一条淡出期间，前面已有条目被摘出文档流，
+   下面的条目要靠 FLIP 的 transform 补间上移；而 CSS 动画的 transform 会盖掉内联的 FLIP 位移，
+   结果是那几条"啪"地跳一格。纯淡出就没有这个冲突。 */
+@keyframes itemDoneOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.item--leaving-done {
+  animation: itemDoneOut 200ms linear both;
+  pointer-events: none;
+}
+
 .hero { animation: rise 560ms var(--ease-out) both; }
 .console, .col--results { animation: rise 620ms var(--ease-out) 120ms both; }
 .col--side { animation: rise 620ms var(--ease-out) 200ms both; }
@@ -673,7 +972,17 @@ textarea:focus { background: var(--white); }
   .hero, .console, .col--results, .col--side, .list--enter .item { animation: fadeOnly 200ms ease both; }
   .dialog__card { animation: fadeOnly 200ms ease both; }
   .item--leaving { animation: none; }
-  .btn, .btn__icon, .tab, .item, .stat, textarea { transition-duration: 1ms; }
+  /* 批量完成退化成"勾选瞬间生效"，不再逐条错峰闪动/退场 */
+  .item--checking, .item--checking .done-toggle { animation: none; }
+  .item--leaving-done { animation: none; opacity: 0; }
+  .drag { transition: none; }
+  .batchbar { animation: fadeOnly 200ms ease both; }
+  /* 垃圾桶保留"醒/瞄准"的变色，但不再放大、歪斜——位移类的提示全部去掉 */
+  .trash { transition-duration: 1ms; transform: none; }
+  body.is-dragging .trash { transform: none; }
+  body.is-dragging .trash--over { transform: none; }
+  .undo { transition: opacity 200ms ease; transform: translate(-50%, 0); }
+  .btn, .btn__icon, .tab, .item, .stat, .pick, .done-toggle, textarea { transition-duration: 1ms; }
   .btn:active, .btn:hover { transform: none; }
   .item:hover, .stat:hover { transform: none; }
 }
