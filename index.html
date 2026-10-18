@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#F4EFE6">
   <title>话里有事 · 群聊待办提取器</title>
+  <script>
+    // 在样式生效前落主题，避免刷新时先闪一下纸白再变牛皮纸。
+    try {
+      if (localStorage.getItem('group-chat-todo:theme') === 'kraft') {
+        document.documentElement.setAttribute('data-theme', 'kraft');
+      }
+    } catch (e) { /* 隐私模式忽略 */ }
+  </script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -16,6 +24,10 @@
     <span class="topbar__tags">
       <span class="tag tag--acid">本地运行</span>
       <span class="tag">本地规则 · AI 可选</span>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" title="切换纸白 / 牛皮纸主题">
+        <span class="theme-toggle__swatch" aria-hidden="true"></span>
+        <span>牛皮纸</span>
+      </button>
     </span>
   </header>
 

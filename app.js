@@ -150,6 +150,7 @@
   const calNextBtn = document.getElementById('cal-next');
   const calTodayBtn = document.getElementById('cal-today');
   const calShowDoneEl = document.getElementById('cal-show-done');
+  const themeToggleBtn = document.getElementById('theme-toggle');
 
   const aiSettingsBtn = document.getElementById('ai-settings');
   const aiNoteEl = document.getElementById('ai-note');
@@ -2536,6 +2537,84 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
+
+  // ============================================================
+  // 主题：纸白 / 牛皮纸
+  // 只切 <html data-theme>，颜色全部由 CSS 语义层接管。
+  // 切换时用 View Transitions 从点击处圆形展开新主题；不支持或
+  // 用户要求减少动态时，直接换色。
+  // ============================================================
+  const THEME_KEY = 'group-chat-todo:theme';
+  const THEME_META = { paper: '#F4EFE6', kraft: '#D8C7A6' };
+  const themeMetaEl = document.querySelector('meta[name="theme-color"]');
+
+  function currentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'kraft' ? 'kraft' : 'paper';
+  }
+
+  function reflectTheme(theme) {
+    const kraft = theme === 'kraft';
+    themeToggleBtn.setAttribute('aria-pressed', kraft ? 'true' : 'false');
+    themeToggleBtn.setAttribute('title', kraft ? '切换到纸白主题' : '切换到牛皮纸主题');
+    if (themeMetaEl) themeMetaEl.setAttribute('content', THEME_META[theme]);
+  }
+
+  function applyTheme(theme) {
+    if (theme === 'kraft') document.documentElement.setAttribute('data-theme', 'kraft');
+    else document.documentElement.removeAttribute('data-theme');
+    reflectTheme(theme);
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* 隐私模式忽略 */ }
+    // 背景着色器也要跟着换色；它是 canvas，CSS 变量管不到。
+    document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: theme } }));
+  }
+
+  function toggleTheme(e) {
+    const next = currentTheme() === 'kraft' ? 'paper' : 'kraft';
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!document.startViewTransition || reduce) {
+      applyTheme(next);
+      return;
+    }
+
+    // 以真实点击位置为圆心；键盘（detail 为 0）用按钮中心。
+    let x, y;
+    if (e && e.detail > 0) {
+      x = e.clientX;
+      y = e.clientY;
+    } else {
+      const r = themeToggleBtn.getBoundingClientRect();
+      x = r.left + r.width / 2;
+      y = r.top + r.height / 2;
+    }
+    // 半径覆盖到最远的屏幕角落。
+    const radius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+    const ease = getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim()
+      || 'cubic-bezier(0.23, 1, 0.32, 1)';
+
+    const transition = document.startViewTransition(function () { applyTheme(next); });
+    transition.ready.then(function () {
+      document.documentElement.animate(
+        {
+          clipPath: [
+            'circle(0px at ' + x + 'px ' + y + 'px)',
+            'circle(' + radius + 'px at ' + x + 'px ' + y + 'px)'
+          ]
+        },
+        {
+          duration: 420,
+          easing: ease,
+          pseudoElement: '::view-transition-new(root)'
+        }
+      );
+    }).catch(function () { /* 过渡被跳过时主题已经切好 */ });
+  }
+
+  themeToggleBtn.addEventListener('click', toggleTheme);
+  reflectTheme(currentTheme());
 
   // ---- 启动 ----
   load();

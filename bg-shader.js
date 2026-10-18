@@ -31,6 +31,7 @@
     'uniform vec2 u_res;',
     'uniform float u_time;',
     'uniform vec2 u_mouse;',
+    'uniform float u_theme;',       // 0 = 纸白，1 = 牛皮纸
     'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
     'float noise(vec2 p){',
     '  vec2 i=floor(p),f=fract(p);',
@@ -42,11 +43,11 @@
     '  vec2 uv=gl_FragCoord.xy/u_res.xy;',
     '  vec2 p=vec2(uv.x*u_res.x/u_res.y,uv.y);',
     '  float t=u_time*0.06;',           // 极慢漂移
-    '  vec3 paper=vec3(0.957,0.937,0.902);',   // 暖纸底 #F4EFE6
-    '  vec3 c1=vec3(0.851,0.714,0.290);',      // 芥末黄
-    '  vec3 c2=vec3(0.231,0.298,0.620);',      // 靛蓝
-    '  vec3 c3=vec3(0.796,0.431,0.369);',      // 陶土
-    '  vec3 c4=vec3(0.455,0.698,0.576);',      // 灰绿
+    '  vec3 paper=mix(vec3(0.957,0.937,0.902),vec3(0.847,0.780,0.651),u_theme);', // 暖纸 #F4EFE6 → 牛皮纸 #D8C7A6
+    '  vec3 c1=mix(vec3(0.851,0.714,0.290),vec3(0.780,0.604,0.180),u_theme);',    // 芥末黄 → 赭黄
+    '  vec3 c2=mix(vec3(0.231,0.298,0.620),vec3(0.184,0.290,0.549),u_theme);',    // 靛蓝 → 深靛蓝
+    '  vec3 c3=mix(vec3(0.796,0.431,0.369),vec3(0.659,0.271,0.184),u_theme);',    // 陶土 → 砖红
+    '  vec3 c4=mix(vec3(0.455,0.698,0.576),vec3(0.369,0.549,0.388),u_theme);',    // 灰绿 → 鼠尾草绿
     '  vec3 col=paper;',
     '  float d;vec2 q;',
     '  q=p+vec2(sin(t*1.2),cos(t*.9))*.5;d=length(q-vec2(.30,.35));col=mix(col,c1,smoothstep(.75,0.,d)*.22);',
@@ -94,7 +95,9 @@
   var uRes = gl.getUniformLocation(prog, 'u_res');
   var uTime = gl.getUniformLocation(prog, 'u_time');
   var uMouse = gl.getUniformLocation(prog, 'u_mouse');
+  var uTheme = gl.getUniformLocation(prog, 'u_theme');
   var mouse = new Float32Array([-1, -1]); // 初始屏幕外，无光晕
+  var lastTime = 0;
 
   // canvas 尺寸改变会重置 context 状态，把绑定收成一个函数，resize 时重放
   function bindState() {
@@ -106,11 +109,17 @@
   bindState();
 
   function draw(time) {
+    lastTime = time;
     gl.uniform2f(uRes, canvas.width, canvas.height);
     gl.uniform1f(uTime, time);
     gl.uniform2f(uMouse, mouse[0], mouse[1]);
+    gl.uniform1f(uTheme, document.documentElement.getAttribute('data-theme') === 'kraft' ? 1 : 0);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
+
+  // 主题切换时立刻重绘一帧：View Transitions 会在 update 回调后马上
+  // 抓取新快照，等到下一帧 rAF 就来不及了。
+  document.addEventListener('themechange', function () { draw(lastTime); });
 
   function resize() {
     // 用 CSS 像素（不乘 DPR）：纯渐变/色斑，低分辨率视觉无损，省 GPU
