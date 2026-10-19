@@ -2616,6 +2616,91 @@
   themeToggleBtn.addEventListener('click', toggleTheme);
   reflectTheme(currentTheme());
 
+  // ============================================================
+  // 开屏：首次访问播放一次「从群聊里拎出待办」。
+  // 点击 / 任意键 / 滚轮跳过；减弱动效时直接不播。
+  // 逻辑只负责：锁滚动、锁交互、跳过、清理、记已看。
+  // 动画本身全在 CSS 里，JS 不参与逐帧。
+  // ============================================================
+  (function initIntro() {
+    const introEl = document.getElementById('intro');
+    if (!introEl) return;
+
+    const root = document.documentElement;
+    const page = document.querySelector('.page');
+    const topbar = document.querySelector('.topbar');
+
+    // 掀开时可以交互，但滚动条留到 finish 再恢复：
+    // 滚动条一出现，视口宽度会变，开屏内容会横向抖一下。
+    function unlockInteraction() {
+      if (page) page.inert = false;
+      if (topbar) topbar.inert = false;
+    }
+
+    function unlockPage() {
+      root.classList.remove('intro-lock');
+      unlockInteraction();
+    }
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // ?intro=1 是显式预览：跳过所有自动跳过条件，也不写「已看过」。
+    const force = new URLSearchParams(location.search).get('intro') === '1';
+    if (!force && (reduce || root.classList.contains('intro-skip'))) {
+      introEl.remove();
+      unlockPage();
+      return;
+    }
+
+    // 纸面盖着的同时锁住滚动和焦点，避免 Tab / 滚轮跑到后面的页面。
+    root.classList.add('intro-lock');
+    if (page) page.inert = true;
+    if (topbar) topbar.inert = true;
+
+    let finished = false;
+    let leaveTimer = 0;
+    let fallbackTimer = 0;
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(leaveTimer);
+      clearTimeout(fallbackTimer);
+      window.removeEventListener('pointerdown', onSkip);
+      window.removeEventListener('keydown', onSkip);
+      window.removeEventListener('wheel', onSkip);
+      unlockPage();
+      introEl.remove();
+      // 预览不消耗「首次」：下次正常打开仍然会播。
+      if (!force) {
+        try { localStorage.setItem('group-chat-todo:intro-seen', '1'); } catch (e) { /* 隐私模式忽略 */ }
+      }
+    }
+
+    function skip() {
+      if (finished) return;
+      clearTimeout(fallbackTimer);
+      introEl.classList.add('is-leaving');
+      unlockInteraction();
+      leaveTimer = setTimeout(finish, 180);
+    }
+
+    function onSkip() { skip(); }
+
+    // 纸面开始上掀时就解锁交互：掀开看到的是已经可交互的真实页面。
+    introEl.addEventListener('animationstart', function (e) {
+      if (e.animationName === 'intro-exit') unlockInteraction();
+    });
+    introEl.addEventListener('animationend', function (e) {
+      if (e.animationName === 'intro-exit') finish();
+    });
+
+    window.addEventListener('pointerdown', onSkip, { passive: true });
+    window.addEventListener('keydown', onSkip);
+    window.addEventListener('wheel', onSkip, { passive: true });
+    // 兜底：动画被浏览器打断（切后台等）时也能收尾。
+    fallbackTimer = setTimeout(finish, 2400);
+  })();
+
   // ---- 启动 ----
   load();
   loadAIConfig();

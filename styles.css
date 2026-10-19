@@ -129,6 +129,8 @@
   --shadow-lg: 9px 9px 0 var(--ink);
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* 屏幕上整块移动（开屏纸面上掀）用；比内置 ease-in-out 更有收尾的减速感 */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   /* 视图翻转的两半：easeInQuad / easeOutQuad（easings.net）。
      转出加速、转入减速，接缝处速度正好接上，拼成一次 180° 翻转。 */
   --ease-flip-out: cubic-bezier(0.11, 0, 0.5, 0);
@@ -1699,6 +1701,252 @@ body.is-dragging .trash--over {
   /* 月份切换同理：JS 的 prefersReduce() 会跳过，CSS 再兜一层 */
   .cal__grid.is-slide-next, .cal__grid.is-slide-prev { animation: none; }
 }
+
+/* ============================================================
+   开屏：首次访问时，把「从群聊里拎出待办」演一遍。
+   只播一次；点击 / 任意键 / 滚轮跳过。
+   只动 transform / opacity / clip-path；颜色全走语义层。
+   ============================================================ */
+html.intro-lock { overflow: hidden; }
+html.intro-skip .intro { display: none; }
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--surface);
+  /* 着色器被纸面盖住时，用同一组品牌色留一点晕染，别让开屏变成纯色板 */
+  background-image:
+    radial-gradient(52vmax 44vmax at 18% 20%,
+      color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 70%),
+    radial-gradient(48vmax 40vmax at 84% 26%,
+      color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%),
+    radial-gradient(50vmax 42vmax at 62% 90%,
+      color-mix(in srgb, var(--accent-3) 8%, transparent), transparent 70%);
+  clip-path: inset(0 0 0 0);
+  /* 纸面整块上移：ease-in-out 比强 ease-out 更能看清"掀开"的过程 */
+  animation: intro-exit 360ms var(--ease-in-out) 1560ms forwards;
+}
+
+/* 跳过：不等自动退场，160ms 淡出。 */
+.intro.is-leaving {
+  animation: none;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.intro__stage {
+  width: min(640px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.intro__chat { width: 100%; max-width: 470px; }
+
+.intro__msg {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 2px solid transparent;
+  font-size: 16px;
+  line-height: 1.55;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: intro-rise 220ms var(--ease-out) calc(50ms + var(--i) * 70ms) forwards;
+}
+
+.intro__who {
+  flex: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.intro__time {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.intro__text { min-width: 0; }
+
+/* 被选中的那条：先被荧光笔划中，再长成一张待办卡。
+   卡片底、描边、硬阴影放在伪元素上，只补间 opacity / scale，
+   不碰 border / box-shadow，避免每帧重绘。 */
+.intro__msg--hit {
+  isolation: isolate;
+  padding-right: 58px;
+}
+.intro__msg--hit::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  background: var(--surface-card);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  transform: scale(0.985);
+  animation: intro-card 160ms var(--ease-out) 620ms forwards;
+}
+
+/* 荧光笔本体：芥末黄横扫，左对齐，带一点点手写歪斜。 */
+.intro__mark {
+  position: relative;
+  isolation: isolate;
+  padding: 0 1px;
+  background: transparent;
+  color: inherit;
+}
+.intro__mark::before {
+  content: "";
+  position: absolute;
+  inset: 8% -3% 6%;
+  z-index: -1;
+  background: var(--accent-2);
+  border-radius: 1px 3px 2px 0;
+  transform: scaleX(0) rotate(-0.6deg);
+  transform-origin: left center;
+  animation: intro-hl 240ms var(--ease-out) 420ms forwards;
+}
+
+.intro__check {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  background: var(--control-checked);
+  border: 2px solid var(--border);
+  opacity: 0;
+  transform: translateY(-50%) scale(0.6) rotate(-10deg);
+  animation: intro-check 170ms var(--ease-out) 790ms forwards;
+}
+/* 和列表里的完成勾同一种形状：墨色对勾，不用白字 */
+.intro__check::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: var(--text);
+  clip-path: polygon(14% 44%, 0 62%, 46% 100%, 100% 12%, 84% 0, 42% 68%);
+}
+
+.intro__tag {
+  position: absolute;
+  right: 10px;
+  top: -11px;
+  padding: 2px 7px;
+  background: var(--surface-strong);
+  color: var(--text-on-strong);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transform: translateY(3px);
+  animation: intro-tag 140ms var(--ease-out) 800ms forwards;
+}
+
+/* 标题像印章一样落下：1.16 → 1，不是从 0 长出来。 */
+.intro__brand {
+  position: relative;
+  margin-top: 38px;
+  text-align: center;
+  opacity: 0;
+  transform: scale(1.16) translateY(-4px);
+  animation: intro-stamp 240ms var(--ease-out) 980ms forwards;
+}
+.intro__title {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 900;
+  font-style: italic;
+  font-size: clamp(50px, 9vw, 84px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+  text-shadow:
+    3px 3px 0 var(--text),
+    6px 6px 0 var(--accent-2);
+}
+/* 星号抽离出文档流：四个汉字本身在舞台上居中，
+   星号挂在右侧，不把标题的视觉重心和副标题一起推偏。 */
+.intro__star {
+  position: absolute;
+  left: 100%;
+  top: 0.06em;
+  margin-left: 0.06em;
+  color: var(--accent);
+  font-size: 0.72em;
+  text-shadow: none;
+  transform-origin: 50% 55%;
+  animation: intro-star 340ms var(--ease-out) 1020ms both;
+}
+.intro__tagline {
+  margin: 14px 0 0;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: intro-fade 160ms var(--ease-out) 1140ms forwards;
+}
+
+@keyframes intro-rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes intro-card {
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes intro-hl {
+  to { transform: scaleX(1) rotate(-0.6deg); }
+}
+@keyframes intro-check {
+  to { opacity: 1; transform: translateY(-50%) scale(1) rotate(0); }
+}
+@keyframes intro-tag {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes intro-stamp {
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes intro-star {
+  0% { opacity: 0; transform: rotate(-110deg) scale(0.85); }
+  70% { opacity: 1; transform: rotate(6deg) scale(1); }
+  100% { opacity: 1; transform: rotate(0) scale(1); }
+}
+@keyframes intro-fade {
+  to { opacity: 1; }
+}
+@keyframes intro-exit {
+  from { clip-path: inset(0 0 0 0); }
+  to { clip-path: inset(0 0 100% 0); }
+}
+
+@media (max-width: 560px) {
+  .intro__msg { font-size: 14px; padding: 9px 12px; gap: 6px; }
+  .intro__msg--hit { padding-right: 52px; }
+  .intro__check { right: 8px; }
+  .intro__tag { right: 6px; }
+  .intro__brand { margin-top: 30px; }
+  .intro__title { font-size: clamp(38px, 13vw, 56px); }
+}
+@media (max-height: 560px) {
+  .intro__msg { padding-top: 7px; padding-bottom: 7px; }
+  .intro__brand { margin-top: 22px; }
+  .intro__title { font-size: clamp(34px, 7vw, 56px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro { display: none; }
+}
+/* ?intro=1 显式预览：系统开了减弱动效时也完整播一遍。 */
+html.intro-force .intro { display: grid; }
 
 /* ---- 响应式 ---- */
 @media (max-width: 900px) {

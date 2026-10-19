@@ -12,12 +12,70 @@
         document.documentElement.setAttribute('data-theme', 'kraft');
       }
     } catch (e) { /* 隐私模式忽略 */ }
+
+    // 开屏只对首次访问播放；减弱动效时直接跳过，别先盖住再淡出。
+    // 在 head 里落类名，避免首帧闪一下完整页面。
+    // ?intro=1 显式预览：无视「已看过」和系统减弱动效，完整播一遍且不写已看标记；
+    // ?intro=0 临时关闭。调试和验收都用得着，不用去清 localStorage。
+    try {
+      var introParam = new URLSearchParams(location.search).get('intro');
+      var introSeen = localStorage.getItem('group-chat-todo:intro-seen') === '1';
+      var introReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (introParam === '1') {
+        document.documentElement.classList.add('intro-lock', 'intro-force');
+      } else if (introParam === '0' || introSeen || introReduce) {
+        document.documentElement.classList.add('intro-skip');
+      } else {
+        document.documentElement.classList.add('intro-lock');
+      }
+    } catch (e) {
+      // 存储不可用（隐私模式等）时仍按首次访问处理；
+      // 若这是显式预览，减弱动效下也要能看见。
+      document.documentElement.classList.add('intro-lock');
+      if (typeof introParam !== 'undefined' && introParam === '1') {
+        document.documentElement.classList.add('intro-force');
+      }
+    }
   </script>
   <link rel="stylesheet" href="styles.css">
+  <noscript>
+    <style>
+      html.intro-lock { overflow: auto; }
+      .intro { display: none; }
+    </style>
+  </noscript>
 </head>
 <body>
   <!-- 着色器背景：主题色在纸面上缓慢晕染漂移 -->
   <canvas class="bg" id="bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- 开屏：首次访问时把「从群聊里拎出待办」演一遍。
+       纯装饰，aria-hidden；点击 / 任意键 / 滚轮可跳过，之后不再出现。
+       文案用 sample-chat.txt 里的合成数据。 -->
+  <div class="intro" id="intro" aria-hidden="true">
+    <div class="intro__stage">
+      <div class="intro__chat">
+        <p class="intro__msg" style="--i:0">
+          <span class="intro__who">班长</span><span class="intro__time">09:12</span>
+          <span class="intro__text">大家早上好，降温注意保暖</span>
+        </p>
+        <p class="intro__msg intro__msg--hit" style="--i:1">
+          <span class="intro__who">班长</span><span class="intro__time">09:15</span>
+          <span class="intro__text"><mark class="intro__mark">明天下午5点前</mark>交高数作业，别忘</span>
+          <span class="intro__tag">待办</span>
+          <span class="intro__check"></span>
+        </p>
+        <p class="intro__msg" style="--i:2">
+          <span class="intro__who">文体委员</span><span class="intro__time">09:20</span>
+          <span class="intro__text">周五之前报名运动会</span>
+        </p>
+      </div>
+      <div class="intro__brand">
+        <p class="intro__title">话里有事<span class="intro__star">*</span></p>
+        <p class="intro__tagline">群聊待办提取器</p>
+      </div>
+    </div>
+  </div>
 
   <header class="topbar">
     <span class="brand">话里有事<span class="brand__star" aria-hidden="true">*</span></span>
