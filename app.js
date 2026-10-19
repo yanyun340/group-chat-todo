@@ -3,13 +3,34 @@
 
   // ===== 提取规则：集中在这里，改规则只动这一处 =====
   const ACTION_WORDS = ['提交', '别忘了', '别忘', '报名', '完成', '通知', '安排', '参加', '回复', '填写', '上传', '打印', '准备', '开会', '考试', '截止', '提醒', '缴费', '领取', '收集', '签到', '必须', '须', '交', '做', '写', '带'];
-  const WEAK_WORDS = ['到时候', '要不要', '再说', '记得', '可能', '有空', '考虑', '要不', '也许', '大概', '想', '看看', '如果', '以后'];
-  // 时间识别。三块：① 相对时长 ② 星期/今天明天这类 ③ 具体日期。
+  // 单字动词容易在别的词里误命中：「交流」「带来」「须知」都不是待办。
+  // 只排除单字前后紧跟这些字的组合；「提交」「报名」这类双字动词不受影响。
+  const SINGLE_ACTION_SKIP_NEXT = { '交': '流往换集融锋汇际谈友易通涉代', '带': '来动头领', '须': '知' };
+  const SINGLE_ACTION_SKIP_PREV = { '交': '外社性', '带': '腰皮磁地纽', '须': '胡触' };
+  const WEAK_WORDS = ['到时候', '要不要', '再说', '可能', '有空', '考虑', '要不', '也许', '大概', '想', '看看', '如果', '以后'];
+  // 「想」在「想出来 / 想法 / 思想 / 理想」里不是"在犹豫要不要做"。
+  // 只在它独立表示意愿时才当含糊词（"我想报名""想去看看"）。
+  const WEAK_SKIP_NEXT = { '想': '出到法象必方' };
+  const WEAK_SKIP_PREV = { '想': '思梦理感' };
+  // 祈使 / 提醒语气：它说明"这句话是让人去做的"，不是"拿不准"。
+  // 「记得」以前被当成含糊词，于是「记得把报告提交到系统」反而掉进待确认。
+  const IMPERATIVE_RE = /(?:请(?!问)|麻烦|务必|一定要|记得|别忘了|别忘|尽快|抓紧)/;
+  // 否定 / 已完成 / 重复：否定词要贴着动作词；中间被「记得 / 请」隔开就不算否定。
+  const NEG_PREFIX_RE = /(?:已经|已|不用|无需|不必|不需要|无须|没有|没|重复)(?:再)?/;
+  // 取消通知：「今晚的选修课取消了」是作废信息，不是待办。
+  const CANCEL_NOTICE_RE = /(?:课|会议|活动|考试|讲座|比赛|训练|班车|安排|聚会|见面会)[^，。！？；]{0,8}(?:取消|作废)/;
+  // 疑问句：「这道题怎么做」「中午一起吃饭吗」是聊天。带请求词或祈使词的保留。
+  const QUESTION_END_RE = /(?:吗|呢|嘛)[。.!！?？\s]*$/;
+  const QUESTION_WORD_RE = /(?:怎么|怎样|为什么|为啥|什么|啥|哪个|哪天|哪次|哪里|多少|几点|多少钱)/;
+  // 时间识别。四块：① 相对时长 ② 周期边界 ③ 带日子的时间 ④ 只给时段+钟点。
   // ① 是补的：「提交之后24小时后查询成绩」这种依赖型截止没有绝对日期，
   //   旧正则完全不认，整句只能掉进「待确认」——而它恰恰是群里最常见的说法。
-  // ② 里补了「本周」（旧正则只有这周/下周/上周，「本周六周日」会退化成只吃到「周六」），
-  //   并允许「周六周日」「周六、周日」「周一到周五」这种连写区间。
-  const TIME_RE = /([一二三四五六七八九十两\d]{1,3}\s*个?(?:小时|分钟|天|日|周|星期|个月|月|年|工作日)\s*(?:之后|以后|后|以内|之内|内)|(?:今天|明天|后天|今晚|明早|明晚|周末|(?:这|本|下|上)周[一二三四五六日天]?|星期[一二三四五六日天]|周[一二三四五六日天])(?:[、和到至~-]?周[一二三四五六日天])?(?:上午|下午|晚上|中午|早|晚)?(?:\d{1,2}[:：]\d{2}|\d{1,2}点|\d{1,2}[日号])?|\d{1,2}[.月/]\d{1,2}[日号]?|\d{1,2}[日号])(?:之前|前|截止)?/;
+  // ② 补「月底 / 月初 / 这周内」：以前只认「这周」，而且解析成周一。
+  // ③ 里补了「本周」（旧正则只有这周/下周/上周，「本周六周日」会退化成只吃到「周六」），
+  //   并允许「周六周日」「周六、周日」「周一到周五」这种连写区间；
+  //   钟点也补上中文数字（「下午两点」），不再只认阿拉伯数字。
+  // ④ 裸时段（「晚上7点」）以前不认，必须写成「今晚7点」才能命中。
+  const TIME_RE = /(\d{4}\s*[年./-]\s*\d{1,2}\s*[月./-]\s*\d{1,2}\s*[日号]?|[一二三四五六七八九十两\d]{1,3}\s*个?(?:小时|分钟|天|日|周|星期|个月|月|年|工作日)\s*(?:之后|以后|后|以内|之内|内)|(?:这个?|本|下个?)?月(?:底|末|初)|(?:这|本|下|上)周(?:内|以内|之内)|(?:大后天|今天|明天|后天|今晚|明早|明晚|周末|(?:下下|这|本|下|上)周[一二三四五六日天]?|星期[一二三四五六日天]|礼拜[一二三四五六日天]|周[一二三四五六日天])(?:[、和到至~-]?周[一二三四五六日天])?(?:上午|下午|晚上|中午|早|晚|凌晨|傍晚)?(?:\d{1,2}[:：]\d{2}|(?:\d{1,2}|[一二三四五六七八九十两]{1,3})点(?:半|\d{1,2}分|[一二三四五六七八九十]{1,3}分)?|\d{1,2}[日号])?|(?:上午|下午|晚上|中午|凌晨|傍晚|早上|夜里)(?:\d{1,2}[:：]\d{2}|(?:\d{1,2}|[一二三四五六七八九十两]{1,3})点(?:半|\d{1,2}分|[一二三四五六七八九十]{1,3}分)?)|(?:放学|下课|上课|上班|下班|午休|睡觉|睡前|午饭|晚饭)(?:之前|之后|以前|以后|前|后)|\d{1,2}[.月/]\d{1,2}[日号]?|\d{1,2}[日号](?:上午|下午|晚上|中午|凌晨|傍晚|早上|夜里)?(?:\d{1,2}[:：]\d{2}|(?:\d{1,2}|[一二三四五六七八九十两]{1,3})点(?:半|\d{1,2}分|[一二三四五六七八九十]{1,3}分)?)?)(?:之前|前|截止)?/;
   // 「@我」和「@所有人」是两回事：前者是点你一个人，后者是广播给全班。
   // 早先把它们并成一个 MENTION_RE，解析面板于是把 @所有人 也说成"提到你(@我)"——
   // 这个 app 的卖点就是可解释，解释本身说错话比不解释更糟。拆开，各说各的。
@@ -49,6 +70,10 @@
   const SPLIT_HARD_RE = /[。；！？!?;]/;
   const SPLIT_SOFT_RE = /，(?=(?:并且|然后|还要|而且|另外|同时|以及|再(?!说)|并))/;
   const LEAD_CONJ_RE = /^(?:并且|然后|还要|而且|另外|同时|以及|并|再)[，,]?/;
+  // 长通知里常见「……提交完就行了，下周要汇报的小组找我报名」：
+  // 逗号后面直接换了一件带时间的事。只在**从句以时间开头、且句中有动作词**时切开，
+  // 这样「今天先这样，明天再说」不会碎成两条，而「，下周…报名」能独立成条。
+  const CONDITION_HEAD_RE = /^(?:如果|若是|要是|万一)/;
 
   const STORAGE_KEY = 'group-chat-todo:v1';
 
@@ -108,6 +133,8 @@
   const detailDateEl = document.getElementById('detail-date');
   const detailDateClearBtn = document.getElementById('detail-date-clear');
   const detailDateNoteEl = document.getElementById('detail-date-note');
+  const detailPromoteBlockEl = document.getElementById('detail-promote-block');
+  const detailPromoteBtn = document.getElementById('detail-promote');
   const detailCondBlockEl = document.getElementById('detail-cond-block');
   const detailCondsEl = document.getElementById('detail-conds');
   const detailRawBtn = document.getElementById('detail-raw-btn');
@@ -233,12 +260,41 @@
     const out = [];
     for (const hard of content.split(SPLIT_HARD_RE)) {
       for (const soft of hard.split(SPLIT_SOFT_RE)) {
-        // 连接词留在后一段开头会读不通（"并且在提交之后…"），剥掉
-        const seg = soft.trim().replace(LEAD_CONJ_RE, '').trim();
-        if (seg) out.push(seg);
+        for (const piece of splitLongClauses(soft)) {
+          // 连接词留在后一段开头会读不通（"并且在提交之后…"），剥掉
+          const seg = piece.trim().replace(LEAD_CONJ_RE, '').trim();
+          if (seg) out.push(seg);
+        }
       }
     }
     return out;
+  }
+
+  // 逗号后如果开始了一件「有时间、有动作」的新事，就把它切开。
+  // 括号里的逗号不参与；条件从句（如果 / 若是…）也不切，规则跟着前一条走。
+  function splitLongClauses(text) {
+    const out = [];
+    let depth = 0;
+    let last = 0;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text.charAt(i);
+      if (ch === '（' || ch === '(') { depth++; continue; }
+      if (ch === '）' || ch === ')') { if (depth) depth--; continue; }
+      if ((ch !== '，' && ch !== ',') || depth) continue;
+      const next = text.slice(i + 1).trim();
+      if (!startsNewTimeTask(next)) continue;
+      out.push(text.slice(last, i));
+      last = i + 1;
+    }
+    out.push(text.slice(last));
+    return out;
+  }
+
+  function startsNewTimeTask(clause) {
+    if (!clause || CONDITION_HEAD_RE.test(clause)) return false;
+    const tm = findTime(clause);
+    if (!tm || tm.index > 2) return false;
+    return actionHits(clause).length > 0;
   }
 
   // 括号里的「如果…就…」是规则的骨架，不是可以一截了之的括号废话。
@@ -261,6 +317,20 @@
       const complete = pairs.filter(function (x) { return x.when && x.then; });
       if (complete.length >= 2) out.push.apply(out, complete);
     });
+    return out;
+  }
+
+  // 括号外的「如果…就…」也是规则，而且常常是整段通知里最该记住的那句。
+  // 括号里的那套要求「至少两对」才算数；这里只认完整的一对：条件 + 结果。
+  function extractInlineConditions(content) {
+    const out = [];
+    const text = content.replace(PAREN_RE, '');
+    const re = /如果([^，。；!?！]{2,40}?)(?:的话)?[，,]?(?:那么|就(?:得|要|必须|需要)?|则)([^，。；!?！]{1,40})/g;
+    let m;
+    while ((m = re.exec(text))) {
+      out.push({ when: '如果' + m[1], then: m[2] });
+      if (m.index === re.lastIndex) re.lastIndex++;
+    }
     return out;
   }
 
@@ -365,6 +435,28 @@
     if (/明天|明日|明早|明晚|明儿/.test(s)) return out(addDays(base, 1), true);
     if (/今天|今日|今晚|今早/.test(s)) return out(base, true);
 
+    // 只有时段 + 钟点（晚上7点 / 下午两点半）：默认指今天。
+    // 认不出具体哪一天时，宁可落在今天并在日历里标出来，也不猜一个别的日期。
+    if (/^(?:上午|下午|中午|晚上|凌晨|傍晚|早上|夜里)\s*(?:\d{1,2}[:：]\d{2}|(?:\d{1,2}|[一二三四五六七八九十两]{1,3})\s*点)/.test(s)) {
+      return out(base, true);
+    }
+
+    // 月底 / 月初 / 本月底 / 下月底：到那个月的边界
+    m = s.match(/(这|本|下|上)?个?月(底|末|初)/);
+    if (m) {
+      const prefix = m[1] || '';
+      const kind = m[2];
+      let mo = base.getMonth();
+      if (prefix === '下') mo += 1;
+      else if (prefix === '上') mo -= 1;
+      if (kind === '初') {
+        // 不写「本月」的「月初」，如果今天已经过了 1 号，多半指下个月初。
+        if (!prefix && base.getDate() > 1) mo += 1;
+        return out(new Date(base.getFullYear(), mo, 1), true);
+      }
+      return out(new Date(base.getFullYear(), mo + 1, 0), true);
+    }
+
     // 周末：工作日说「周末」指接下来的周六；周六/周日说就是今天
     if (/周末/.test(s)) {
       const w = base.getDay();
@@ -372,12 +464,26 @@
       return out(addDays(base, delta), true);
     }
 
-    // 下周 / 本周 / 上周（不带具体星期几）
-    m = s.match(/^(这|本|下|上)周(?:之前|前|截止)?$/);
+    // 下下周 / 下下周三：再往后推一整周
+    m = s.match(/^下下(?:周|星期|礼拜)([一二三四五六日天])/);
+    if (m) {
+      const idx = weekdayIndex(m[1]);
+      if (idx == null) return null;
+      const cur = (base.getDay() + 6) % 7;
+      return out(addDays(base, 14 + idx - cur), true);
+    }
+    m = s.match(/^下下(?:周|星期|礼拜)(?:内|以内|之前|前|截止)?$/);
     if (m) {
       const cur = (base.getDay() + 6) % 7;
-      const delta = m[1] === '下' ? (7 - cur) : m[1] === '上' ? (-7 - cur) : (-cur);
-      return out(addDays(base, delta), true);
+      return out(addDays(base, 14 + 6 - cur), true);
+    }
+
+    // 这周内 / 下周前 / 上周（不带具体星期几）：截止到那一周的周日
+    m = s.match(/^(这|本|下|上)?(?:周|星期|礼拜)(?:内|以内|之内)?(?:之前|前|截止)?$/);
+    if (m) {
+      const cur = (base.getDay() + 6) % 7; // 周一 = 0
+      const offset = m[1] === '下' ? 7 : m[1] === '上' ? -7 : 0;
+      return out(addDays(base, offset + 6 - cur), true);
     }
 
     // 周一到周五 / 周六周日：区间取最后一天作为截止日
@@ -471,10 +577,130 @@
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // ---- 提取前的几道小闸 ----
+  // 疑问句不是交代：带请求词（谁有 / 帮忙…）或祈使词的保留，
+  // 比如「谁有高数笔记」是请求，「请问几点开会」留给人看。
+  function isQuestion(text) {
+    if (QUESTION_END_RE.test(text)) return true;
+    if (!QUESTION_WORD_RE.test(text)) return false;
+    for (const w of REQUEST_WORDS) { if (text.indexOf(w) >= 0) return false; }
+    return !IMPERATIVE_RE.test(text);
+  }
+
+  // 单字动词的词内误命中：「交流」「带来」「须知」。
+  function actionSkip(text, word, i) {
+    if (word.length !== 1) return false;
+    const next = text.charAt(i + 1);
+    const prev = text.charAt(i - 1);
+    const ns = SINGLE_ACTION_SKIP_NEXT[word] || '';
+    const ps = SINGLE_ACTION_SKIP_PREV[word] || '';
+    return (!!next && ns.indexOf(next) >= 0) || (!!prev && ps.indexOf(prev) >= 0);
+  }
+
+  // 所有动作词命中（保留位置），否定判断要用；无效命中直接跳过。
+  function actionHits(text) {
+    const hits = [];
+    for (const cand of ACTION_WORDS) {
+      let from = 0;
+      while (from <= text.length) {
+        const i = text.indexOf(cand, from);
+        if (i < 0) break;
+        if (!actionSkip(text, cand, i)) hits.push({ word: cand, index: i });
+        from = i + cand.length;
+      }
+    }
+    return hits;
+  }
+
+  // 取「信息量最大」的动作词，而不是数组里第一个命中的。
+  // 先比长度（「别忘了」胜过其子串「别忘」），同长再比谁在原文里出现得早。
+  // 这个含糊词在这里是不是真的含糊（排除词内误命中）。
+  function weakHit(text, word) {
+    let from = 0;
+    while (from <= text.length) {
+      const i = text.indexOf(word, from);
+      if (i < 0) return false;
+      const next = text.charAt(i + word.length);
+      const prev = text.charAt(i - 1);
+      const ns = WEAK_SKIP_NEXT[word] || '';
+      const ps = WEAK_SKIP_PREV[word] || '';
+      if (!((next && ns.indexOf(next) >= 0) || (prev && ps.indexOf(prev) >= 0))) return true;
+      from = i + word.length;
+    }
+    return false;
+  }
+
+  function pickAction(hits) {
+    let best = null;
+    for (const h of hits) {
+      if (!best || h.word.length > best.word.length || (h.word.length === best.word.length && h.index < best.index)) {
+        best = h;
+      }
+    }
+    return best ? best.word : null;
+  }
+
+  // 动作后面直接跟「了 / 过」并到此为止，是在说"已经做完了"，不是新待办。
+  //「作业交了」「报名过了」；「交了作业再走」后面还有宾语，不算。
+  function isCompletedAt(text, hit) {
+    const tail = text.slice(hit.index + hit.word.length);
+    return /^(?:了|过|完了|好了)(?:[。.!！?？，,、；;\s]|$)/.test(tail);
+  }
+
+  // 这个动作词是不是被"已经 / 不用 / 重复"否掉了。
+  // 取离动作最近的那个否定词；中间若又出现「记得 / 请」等正面指令，就不算否定。
+  function isNegatedAt(text, index) {
+    const prefix = text.slice(Math.max(0, index - 8), index);
+    let best = null;
+    let m;
+    const re = new RegExp(NEG_PREFIX_RE.source, 'g');
+    while ((m = re.exec(prefix))) {
+      best = m;
+      if (m.index === re.lastIndex) re.lastIndex++;
+    }
+    if (!best) return false;
+    const between = prefix.slice(best.index + best[0].length).replace(/[\s，,、]/g, '');
+    if (/(?:记得|请|务必|别忘|需要|要(?!不))/.test(between)) return false;
+    // 单字否定（已 / 没）必须紧贴动作，「没关系，交作业」里的"没"不能算
+    if ((best[0] === '已' || best[0] === '没') && between.length > 0) return false;
+    return true;
+  }
+
+  // 时间命中里有些不是日期：3号线、3号楼、第3号、1.5倍、1.5小时（只吃到"5小时"）。
+  const NON_DATE_AFTER = '线楼院窗门车房馆床桌椅机柜架';
+  const NON_DATE_UNIT_AFTER = '倍折元块米斤克升个次人岁%';
+  function timeLooksLikeNonDate(text, m) {
+    const s = m[0];
+    const after = text.charAt(m.index + s.length);
+    const before = text.charAt(m.index - 1);
+    // after 为空表示命中就在句尾：句尾的「15号」是日期，不是「15号楼」。
+    if (after && /[日号]$/.test(s) && NON_DATE_AFTER.indexOf(after) >= 0) return true;
+    if (/[日号]$/.test(s) && before === '第') return true;
+    if (after && /[./月]/.test(s) && NON_DATE_UNIT_AFTER.indexOf(after) >= 0) return true;
+    // 「1.5小时 / 3.5年」：小数后面跟时长单位，不是 1 月 5 日。
+    if (/^\d{1,3}[./月]\d{1,3}$/.test(s) && /^(?:小时|分钟|年)/.test(text.slice(m.index + s.length))) return true;
+    if (before === '.' && /^[0-9]{1,3}(?:小时|分钟)/.test(s)) return true;
+    return false;
+  }
+
+  // 从前往后找第一个"像日期"的命中，跳过号码、倍数这类。
+  function findTime(text) {
+    const re = new RegExp(TIME_RE.source, 'g');
+    let m;
+    while ((m = re.exec(text))) {
+      if (!timeLooksLikeNonDate(text, m)) return m;
+      if (m.index === re.lastIndex) re.lastIndex++;
+    }
+    return null;
+  }
+
   // content 是一条已经切好的句子；source 是发言人；noteIn 是整行带下来的标签判定
   function extract(content, source, noteIn) {
     const reasons = [];
     const highlights = [];
+
+    // 问句先出局：它问的是"怎么做 / 吃不吃"，不是"要你去做"。
+    if (isQuestion(content)) return null;
 
     // 段首也可能是标签：一行里「……。注：……」被句号切开后，「注」落在后一段的开头，
     // 这时整行的 note 管不到它，得就地再认一次。
@@ -487,35 +713,38 @@
     // 全是"它为什么不是任务"，而第一条其实就该说"它是什么"。
     if (note) reasons.push('说明性文字「' + note + '」');
 
-    const tm = content.match(TIME_RE);
+    const tm = findTime(content);
     let deadline = null;
     if (tm) { deadline = tm[1]; reasons.push('时间「' + deadline + '」'); highlights.push(deadline); }
+
+    // 请求词先算：「不用报名了，谁有笔记」不能因为前半句被否定，连请求一起丢掉。
+    let reqWord = null;
+    for (const w of REQUEST_WORDS) { if (content.includes(w)) { reqWord = w; break; } }
 
     // 取「信息量最大」的动作词，而不是数组里第一个命中的。
     // 旧写法按 ACTION_WORDS 的顺序取首个，而「提交」恰好排在「完成」前面，
     // 于是"尽快完成考试，并且在提交之后…"报出来的关键词是「提交」，主次颠倒。
     // 规则：先比长度（「别忘了」胜过其子串「别忘」），同长再比谁在原文里出现得早。
-    function pickAction(text) {
-      let w = null;
-      let at = -1;
-      for (const cand of ACTION_WORDS) {
-        const i = text.indexOf(cand);
-        if (i < 0) continue;
-        if (w === null || cand.length > w.length || (cand.length === w.length && i < at)) {
-          w = cand;
-          at = i;
-        }
-      }
-      return w;
-    }
-    // 先在没有括号的正文里找。找不到才看括号里——括号里的命中另作解释。
+    // 被「已经 / 不用 / 重复」否掉的命中不参与选择。
     const bare = content.replace(PAREN_RE, '');
-    let action = pickAction(bare);
+    const bareHits = actionHits(bare);
+    const bareOk = bareHits.filter(function (h) { return !isNegatedAt(bare, h.index) && !isCompletedAt(bare, h); });
+    const inParenHits = actionHits(content).filter(function (h) { return !isNegatedAt(content, h.index) && !isCompletedAt(content, h); });
+    let action = null;
     let actionInParen = false;
-    if (!action) {
-      const inParen = pickAction(content);
-      if (inParen) { action = inParen; actionInParen = true; }
+    if (bareOk.length) {
+      action = pickAction(bareOk);
+    } else if (!bareHits.length && inParenHits.length) {
+      action = pickAction(inParenHits);
+      actionInParen = true;
     }
+
+    // 全是否定 / 已完成：这条不是新待办。
+    // 但如果同时还有请求词或时间，说明这段话里另有信息，留着让人看。
+    if (!action && bareHits.length && !reqWord && !deadline) return null;
+    // 取消通知：没有动作词时，它就是一条作废信息。
+    if (!action && !reqWord && CANCEL_NOTICE_RE.test(content)) return null;
+
     if (action) {
       reasons.push(actionInParen
         ? '关键词「' + action + '」出现在括号里的假设句中，不算交代你做的事'
@@ -525,9 +754,25 @@
       if (!actionInParen) highlights.push(action);
     }
 
+    // 祈使 / 提醒语气：把「记得交」和「可能考虑」分开。
+    // 提醒语气足以让一条「有动作、没日期」的句子变成待办。
+    let imperative = null;
+    const im = content.match(IMPERATIVE_RE);
+    if (im) {
+      imperative = im[0];
+      if (imperative !== action) {
+        reasons.push('提醒语气「' + imperative + '」');
+        highlights.push(imperative);
+      }
+    }
+
     // 规则骨架：括号里的「如果…就…」成对拎出来，解析里单列。
     // 这条是**正面**信息——它规定了什么，而不只是"它为什么不是任务"。
     const conditions = extractConditions(content);
+    extractInlineConditions(content).forEach(function (c) {
+      const dup = conditions.some(function (x) { return x.when === c.when && x.then === c.then; });
+      if (!dup) conditions.push(c);
+    });
     if (conditions.length) reasons.push('识别到 ' + conditions.length + ' 条「如果…就…」条件');
 
     // 「三选一 / 五选一」这类选一约束：列进解析，帮人看懂这条任务到底要几选几
@@ -539,8 +784,6 @@
       });
     }
 
-    let reqWord = null;
-    for (const w of REQUEST_WORDS) { if (content.includes(w)) { reqWord = w; break; } }
     if (reqWord) { reasons.push('请求「' + reqWord + '」'); highlights.push(reqWord); }
 
     const mention = content.match(MENTION_RE);
@@ -556,7 +799,7 @@
 
     let weak = null;
     for (const w of WEAK_WORDS) {
-      if (!content.includes(w)) continue;
+      if (!weakHit(content, w)) continue;
       // 「如果…就…」是**确定的条件**，不是"可能 / 到时候"那种犹豫。
       // 一刀切把"如果"判成措辞含糊，等于把一条明确规则说成拿不准的事。
       //（真的含糊的"如果有空"仍然会被 WEAK_WORDS 里的"有空"抓住。）
@@ -581,7 +824,7 @@
 
     let state;
     if (weak) state = 'confirm';
-    else if (action && !actionInParen && (deadline || relevant)) state = 'todo';
+    else if (action && !actionInParen && (deadline || relevant || imperative)) state = 'todo';
     else state = 'confirm';
 
     return {
@@ -712,6 +955,9 @@
     detailDateEl.value = item.dueDate || '';
     detailDateClearBtn.disabled = !item.dueDate;
     detailDateNoteEl.textContent = dateNote(item);
+
+    // 「待确认」只在还没完成时给一键转正的路。
+    detailPromoteBlockEl.hidden = !(item.state === 'confirm' && !item.done);
 
     const reasons = item.reasons.length ? item.reasons : ['未命中特定规则，按时间或相关性保留'];
     detailReasonsEl.innerHTML = reasons.map(function (r) {
@@ -2230,6 +2476,20 @@
       if (item) setItemDueDate(item, null);
     });
   }
+
+  // 「待确认」一键转正：规则没把握的事，交给人确认，而不是让它永远悬着。
+  // 依据里留一行，说明这次转正是你做的，不是规则算出来的。
+  function promoteToTodo() {
+    const item = items.find(function (i) { return i.id === selectedId; });
+    if (!item || item.state !== 'confirm' || item.done) return;
+    item.state = 'todo';
+    item.reasons = (item.reasons || []).concat('由你手动确认为待办');
+    save();
+    renderAll();
+    renderDetail(item);
+    announce('已确认为待办');
+  }
+  if (detailPromoteBtn) detailPromoteBtn.addEventListener('click', promoteToTodo);
 
   // ---- 拖拽排序 ----
   // 交互判定：排序是「偶发、有明确意图」的操作，不是高频动作，

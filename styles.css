@@ -1411,6 +1411,7 @@ body.is-dragging .trash--over {
   line-height: 1.6;
   color: var(--text-muted);
 }
+.detail__promote .btn { margin-top: 10px; }
 .detail__reasons li { margin: 4px 0; }
 
 /* 条件：一条规则一行，「如果… → 就…」左右分开，扫一行就知道这条规则管什么。
