@@ -107,11 +107,20 @@
   --data-2: var(--p-pink);
   --data-3: var(--p-mint-deep);
 
-  /* 反色 / 选中：成组使用，避免深底上出现低对比的零散颜色 */
+  /* 反色 / 选中：成组使用，避免深底上出现低对比的零散颜色。
+     这套反色留给标签页和日历选中日——它们字少、字号大，反黑更利落。 */
   --selected-surface: var(--surface-strong);
   --selected-text: var(--text-on-strong);
   --selected-muted: var(--text-on-strong-muted);
   --selected-accent: var(--accent-2);
+
+  /* 条目「正在看解析」：淡靛蓝底 + 墨字。
+     整行反黑时，夹在中间的 chip（尤其「任务」的灰绿底）会整块发闷，
+     状态色也互相抢；浅底反而让每种颜色各归各位。 */
+  --open-surface: #E2E7F5;
+  --open-text: var(--text);
+  --open-muted: #4B5470;             /* 对淡靛蓝 6.1:1 */
+  --open-accent: var(--accent);
 
   /* 日历工作量底纹：数值只由 JS 落到 data-load，颜色只在这里定义 */
   --load-1: var(--p-load-1);
@@ -184,6 +193,11 @@
   --status-weekend: #8F3A26;
   --control-checked: var(--status-todo);
 
+  /* 条目打开态：冷一档的淡蓝，和卡纸的暖黄拉开，但仍是纸的质感。 */
+  --open-surface: #DCE2EE;
+  --open-muted: #4A5060;             /* 对淡蓝 6.2:1 */
+  --open-accent: var(--accent);
+
   --data-1: #2F4A8C;
   --data-2: #9B3D28;
   --data-3: #3F6B48;
@@ -217,7 +231,9 @@ body {
   outline-offset: 2px;
 }
 .list .item--selected :is(button, input, [tabindex]):focus-visible,
-.cal-item--selected :is(button, input, [tabindex]):focus-visible,
+.cal-item--selected :is(button, input, [tabindex]):focus-visible {
+  outline-color: var(--open-accent);
+}
 .undo :is(button, input, [tabindex]):focus-visible {
   outline-color: var(--selected-accent);
 }
@@ -484,6 +500,8 @@ textarea:focus { background: var(--surface-field-focus); }
   transition: transform 140ms var(--ease-out);
 }
 .btn:active { transform: translate(2px, 2px); }
+/* .btn 的 display: inline-flex 会盖掉浏览器给 [hidden] 的默认样式，这里补回来。 */
+.btn[hidden] { display: none; }
 
 .btn--primary {
   background: var(--surface-strong);
@@ -689,8 +707,8 @@ textarea:focus { background: var(--surface-field-focus); }
   .drag:hover { opacity: 0.7; background-color: var(--surface-sunken); }
 }
 .drag:focus-visible { opacity: 1; outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-/* 深色选中态下，墨色点阵看不见，换成纸色 */
-.item--selected .drag { background-image: radial-gradient(var(--selected-muted) 1.1px, transparent 1.2px); }
+/* 选中态下点阵换成次级靛蓝，跟着整行的字色走 */
+.item--selected .drag { background-image: radial-gradient(var(--open-muted) 1.1px, transparent 1.2px); }
 
 /* 被拖起来的那条：脱离列表流，抬起（硬阴影加大）——宽而扁的行用旋转会读成"整行歪掉"，所以不旋转 */
 .item--dragging {
@@ -750,16 +768,16 @@ body.is-dropping .col--results {
   box-shadow: 3px 3px 0 var(--accent-2);
 }
 
-/* 选中：反色 + 实心阴影加大，一眼锁定 */
+/* 选中：淡靛蓝底 + 墨字 + 加大的靛蓝硬阴影，一眼锁定但不吃字 */
 .list .item--selected {
-  background: var(--selected-surface);
-  color: var(--selected-text);
-  box-shadow: 7px 7px 0 var(--selected-accent);
+  background: var(--open-surface);
+  color: var(--open-text);
+  box-shadow: 7px 7px 0 var(--open-accent);
 }
-.list .item--selected .text { color: var(--text-on-strong); }
-.list .item--selected .source { color: var(--selected-muted); }
-.list .item--selected .imported { color: var(--selected-muted); }
-.list .item--selected .item__more { color: var(--selected-accent); }
+.list .item--selected .text { color: var(--open-text); }
+.list .item--selected .source { color: var(--open-muted); }
+.list .item--selected .imported { color: var(--open-muted); }
+.list .item--selected .item__more { color: var(--open-accent); }
 
 .done-toggle {
   appearance: none;
@@ -848,11 +866,10 @@ body.is-dropping .col--results {
 .chip--state { background: var(--status-confirm); color: var(--text-on-strong); }
 .chip--state-done { background: var(--status-done); color: var(--text); }
 
-.item--selected .chip { border-color: var(--border-on-strong); }
-/* 反色行里，墨色底的「与你相关」会整块融进背景；AI 的靛蓝底也偏暗。
-   这里把这两种标签翻成浅底深字，保证选中时还读得清。 */
+.item--selected .chip { border-color: var(--border); }
+/* 「与你相关」在选中行上保持浅底深字，不跟靛蓝底混成一片。 */
 .item--selected .chip--me { background: var(--surface-card); color: var(--text); }
-.item--selected .chip--ai { background: var(--selected-accent); color: var(--text); }
+.item--selected .chip--ai { background: var(--open-accent); color: var(--text-on-strong); }
 
 .source { font-size: 12.5px; color: var(--text-muted); }
 .imported { font-size: 12px; font-family: var(--mono); color: var(--text-muted); }
@@ -873,7 +890,7 @@ body.is-dropping .col--results {
 @media (hover: hover) and (pointer: fine) {
   .del:hover { background: var(--danger); color: var(--text-on-strong); border-color: var(--border); }
 }
-.item--selected .del { background: transparent; color: var(--text-on-strong); border-color: var(--border-on-strong); }
+.item--selected .del { background: transparent; color: var(--open-text); border-color: var(--border); }
 
 .empty { padding: 32px 12px; text-align: center; color: var(--text-muted); font-family: var(--mono); }
 
@@ -883,7 +900,7 @@ body.is-dropping .col--results {
 .calendar { margin-top: 16px; }
 .calendar[hidden] { display: none; }
 
-/* 日历模式下，状态标签和列表专属工具让位；AI 设置和导出仍可用。 */
+/* 日历模式下，状态标签和列表专属工具让位；AI 设置仍可用。 */
 .listbox.is-calendar .tabs,
 .listbox.is-calendar .summary,
 .listbox.is-calendar #list,
@@ -1163,11 +1180,11 @@ body.is-dropping .col--results {
 .cal-item--done { --state: var(--status-done); border-left-color: var(--state); }
 .cal-item--overdue { --node: var(--status-overdue); background: var(--status-overdue-surface); }
 .cal-item--selected {
-  background: var(--selected-surface);
-  color: var(--selected-text);
-  box-shadow: 3px 3px 0 var(--selected-accent);
+  background: var(--open-surface);
+  color: var(--open-text);
+  box-shadow: 3px 3px 0 var(--open-accent);
 }
-.cal-item--selected .cal-check { background: var(--surface-on-strong); }
+.cal-item--selected .cal-check { background: var(--surface-card); }
 
 @media (hover: hover) and (pointer: fine) {
   .cal-item:not(.cal-item--selected):hover {
@@ -1197,7 +1214,7 @@ body.is-dropping .col--results {
   line-height: 1.5;
 }
 .cal-item--done .cal-item__text { color: var(--text-muted); text-decoration: line-through; }
-.cal-item--selected .cal-item__text { color: var(--text-on-strong); }
+.cal-item--selected .cal-item__text { color: var(--open-text); }
 .cal-item__meta {
   display: flex;
   align-items: center;
@@ -1208,7 +1225,7 @@ body.is-dropping .col--results {
   font-size: 11px;
   color: var(--text-muted);
 }
-.cal-item--selected .cal-item__meta { color: var(--selected-muted); }
+.cal-item--selected .cal-item__meta { color: var(--open-muted); }
 .cal-item__tag {
   flex: none;
   white-space: nowrap;
@@ -1219,11 +1236,11 @@ body.is-dropping .col--results {
 }
 .cal-item__tag--confirm { background: var(--status-confirm); color: var(--text-on-strong); }
 .cal-item__tag--done { background: var(--status-done); }
-.cal-item--selected .cal-item__tag { border-color: var(--border-on-strong); }
+.cal-item--selected .cal-item__tag { border-color: var(--border); }
 .cal-item__manual { color: var(--accent); font-weight: 700; }
-.cal-item--selected .cal-item__manual { color: var(--selected-accent); }
+.cal-item--selected .cal-item__manual { color: var(--open-accent); }
 .cal-item__overdue { color: var(--status-overdue); }
-.cal-item--selected .cal-item__overdue { color: var(--status-overdue-on-strong); }
+.cal-item--selected .cal-item__overdue { color: var(--status-overdue); }
 /* 空白日：虚线框 + 斜纹 + 一道破折号，像是日历上「特意空出来」的一格，
    而不是忘了渲染。和忙日的实线卡片形成对照。 */
 .cal-empty {
@@ -1567,7 +1584,8 @@ body.is-dragging .trash--over {
   color: var(--text-muted);
 }
 .field input,
-.field select {
+.field select,
+.field textarea {
   width: 100%;
   padding: 9px 11px;
   background: var(--surface-field);
@@ -1578,8 +1596,10 @@ body.is-dragging .trash--over {
   outline: none;
   transition: background 140ms var(--ease-out);
 }
+.field textarea { min-height: 84px; line-height: 1.6; resize: vertical; }
 .field input:focus,
-.field select:focus { background: var(--surface-field-focus); }
+.field select:focus,
+.field textarea:focus { background: var(--surface-field-focus); }
 .ai-why {
   margin: 0 0 14px;
   min-height: 18px;
@@ -1692,7 +1712,7 @@ body.is-dragging .trash--over {
   body.is-dragging .trash--over { transform: none; }
   .undo { transition: opacity 200ms ease; transform: translate(-50%, 0); }
   .btn, .btn__icon, .tab, .item, .stat, .pick, .done-toggle, textarea,
-  .field input, .field select, .cal__day, .cal-item, .cal__navbtn, .cal-check,
+  .field input, .field select, .field textarea, .cal__day, .cal-item, .cal__navbtn, .cal-check,
   .theme-toggle, .detail__date-row input { transition-duration: 1ms; }
   .btn:active, .btn:hover, .theme-toggle:active, .theme-toggle:hover { transform: none; }
   .item:hover, .stat:hover, .cal__day:hover, .cal-item:hover { transform: none; }
@@ -1969,7 +1989,7 @@ html.intro-force .intro { display: grid; }
   .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
 
   /* 320px 下工具栏只剩约 232px：收紧间距和按钮内边距，
-     让「列表 / AI / 导出」仍然排在一行，不留下一个孤零零的按钮。 */
+     让「列表 / AI / 多选 / 全部完成」仍然排得下，不留下一个孤零零的按钮。 */
   .listbox__tools { gap: 6px; }
   .btn--sm { padding: 6px 10px; }
 

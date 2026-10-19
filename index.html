@@ -146,7 +146,6 @@
                 <button type="button" id="ai-settings" class="btn btn--ghost btn--sm" title="AI 设置" aria-label="AI 设置"><span aria-hidden="true">⚙</span> AI</button>
                 <button type="button" id="select-mode" class="btn btn--ghost btn--sm js-list-only" aria-pressed="false">多选</button>
                 <button type="button" id="done-all" class="btn btn--ghost btn--sm js-list-only">全部完成</button>
-                <button type="button" id="export" class="btn btn--ghost btn--sm">导出 JSON</button>
               </div>
             </div>
 
@@ -175,6 +174,7 @@
                   <button type="button" class="cal__navbtn" id="cal-next" aria-label="下个月">›</button>
                 </div>
                 <button type="button" class="btn btn--ghost btn--sm" id="cal-today">今天</button>
+                <button type="button" class="btn btn--primary btn--sm" id="cal-add" title="在日历里添加一条待办"><span aria-hidden="true">＋</span> 添加待办</button>
                 <label class="cal__done">
                   <input type="checkbox" id="cal-show-done" checked>
                   显示已完成
@@ -315,13 +315,36 @@
     </div>
   </div>
 
+  <!-- 手动添加：日历里直接加一条要干的事。
+       只进本机的 items，不改群聊原文；日期留空就落到「未排期」。 -->
+  <div class="dialog" id="add-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="add-dialog__title">
+    <div class="dialog__backdrop" data-add-close aria-hidden="true"></div>
+    <div class="dialog__card" role="document">
+      <h2 class="dialog__title" id="add-dialog__title">添加待办</h2>
+      <p class="dialog__body dialog__body--sm">只记在本机，不会改动你贴的群聊原文。日期留空就进「未排期」。</p>
+      <label class="field">
+        <span class="field__label">要做什么</span>
+        <textarea id="add-text" rows="3" maxlength="200" placeholder="例如：周五前交实验报告"></textarea>
+      </label>
+      <label class="field">
+        <span class="field__label">放在日历哪一天</span>
+        <input type="date" id="add-date">
+      </label>
+      <p class="ai-why" id="add-status" role="status" aria-live="polite"></p>
+      <div class="dialog__actions">
+        <button type="button" class="btn btn--ghost" id="add-cancel">取消</button>
+        <button type="button" class="btn btn--primary" id="add-confirm">添加</button>
+      </div>
+    </div>
+  </div>
+
   <!-- AI 设置：可选增强。没有配置时，页面行为与纯本地版完全一致。
-       Key 只写进本浏览器的 localStorage，不写进代码、仓库或导出文件。 -->
+       Key 只写进本浏览器的 localStorage，不写进代码或仓库。 -->
   <div class="dialog" id="ai-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="ai-dialog__title">
     <div class="dialog__backdrop" data-ai-close aria-hidden="true"></div>
     <div class="dialog__card dialog__card--wide" role="document">
       <h2 class="dialog__title" id="ai-dialog__title">AI 提取设置</h2>
-      <p class="dialog__body dialog__body--sm">AI 是可选的。不配置时，全部功能由本地规则完成。配置保存后，点「提取待办」会把整段群聊直接交给 AI 整理成待办，结果写进列表；每条都会在「解析」里给出原文证据。密钥只保存在这个浏览器的 localStorage 里，不写进代码、仓库或导出文件；提取时，这段群聊记录会发送到你下面填写的服务。</p>
+      <p class="dialog__body dialog__body--sm">AI 是可选的。不配置时，全部功能由本地规则完成。配置保存后，点「提取待办」会把整段群聊直接交给 AI 整理成待办，结果写进列表；每条都会在「解析」里给出原文证据。密钥只保存在这个浏览器的 localStorage 里，不写进代码或仓库；提取时，这段群聊记录会发送到你下面填写的服务。</p>
 
       <label class="field">
         <span class="field__label">服务商</span>

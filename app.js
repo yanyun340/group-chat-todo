@@ -150,6 +150,13 @@
   const calNextBtn = document.getElementById('cal-next');
   const calTodayBtn = document.getElementById('cal-today');
   const calShowDoneEl = document.getElementById('cal-show-done');
+  const calAddBtn = document.getElementById('cal-add');
+  const addDialogEl = document.getElementById('add-dialog');
+  const addTextEl = document.getElementById('add-text');
+  const addDateEl = document.getElementById('add-date');
+  const addStatusEl = document.getElementById('add-status');
+  const addCancelBtn = document.getElementById('add-cancel');
+  const addConfirmBtn = document.getElementById('add-confirm');
   const themeToggleBtn = document.getElementById('theme-toggle');
 
   const aiSettingsBtn = document.getElementById('ai-settings');
@@ -187,7 +194,7 @@
   let undoBatches = [];
   let undoTimer = null;
 
-  // AI 配置只放在 localStorage：不进代码、不进仓库、不进导出文件。
+  // AI 配置只放在 localStorage：不进代码、不进仓库。
   let aiConfig = { provider: 'deepseek', baseUrl: AI_PRESETS.deepseek.baseUrl, model: AI_PRESETS.deepseek.model, key: '' };
   let aiBusy = false;
   let aiCache = {};
@@ -751,9 +758,11 @@
   // 解析面板里关于「日历排期」的一句话：说清日期是原文识别的、推算的，还是手动改的。
   function dateNote(item) {
     if (item.dueDateSource === 'manual') {
-      return item.dueDate
-        ? '已手动排期到 ' + fmtDayCN(item.dueDate) + '，原文截止说法不变。'
-        : '已清除日历排期，原文截止说法不变。';
+      if (item.dueDate) {
+        return (item.manual ? '手动添加，排在 ' : '已手动排期到 ') + fmtDayCN(item.dueDate)
+          + (item.manual ? '，可随时改。' : '，原文截止说法不变。');
+      }
+      return item.manual ? '手动添加的条目，还没排期。' : '已清除日历排期，原文截止说法不变。';
     }
     if (item.dueDate) {
       const from = item.deadline ? '「' + item.deadline + '」' : '原文';
@@ -863,6 +872,8 @@
     if (!batchbarEl) return;
     const n = picked.size;
     batchCountEl.textContent = '已选 ' + n + ' 条';
+    // 「已完成」标签下没有"标记完成"可做——按钮留着只会点出一个空操作。
+    batchDoneBtn.hidden = filter === 'done';
     batchDoneBtn.disabled = n === 0;
     batchDeleteBtn.disabled = n === 0;
     const vis = visibleItems();
@@ -1531,7 +1542,7 @@
         conditions: extractConditions(evidence || raw || title),
         reasons: reasons,
         highlights: [evidence],
-        // AI 条目的溯源信息：证据、原始行、行号。导出时一并带上。
+        // AI 条目的溯源信息：证据、原始行、行号，供解析面板对照原文。
         evidence: evidence,
         aiExtracted: true,
         line: lineNo,
@@ -1812,12 +1823,18 @@
     const meta = [];
     meta.push('<span class="cal-item__tag cal-item__tag--' + state + '">' + stateLabel + '</span>');
     if (item.deadline) meta.push('<span>原文截止 ' + escapeHTML(item.deadline) + '</span>');
+    else if (item.manual) meta.push('<span class="cal-item__manual">手动添加</span>');
     else if (item.dueDate) meta.push('<span>无截止说法</span>');
     else meta.push('<span>原文没有截止时间</span>');
-    if (item.dueDateSource === 'manual') meta.push('<span class="cal-item__manual">手动排期</span>');
+    if (item.dueDateSource === 'manual' && !item.manual) {
+      meta.push('<span class="cal-item__manual">手动排期</span>');
+    }
     if (overdue) meta.push('<span class="cal-item__overdue">已过期</span>');
     if (item.relevant) meta.push('<span>与你相关</span>');
-    if (item.source) meta.push('<span>' + escapeHTML(item.source) + '</span>');
+    // 手动添加的条目：上面已经用「手动添加」标过来源，别再原样重复一遍。
+    if (item.source && !(item.manual && item.source === '手动添加')) {
+      meta.push('<span>' + escapeHTML(item.source) + '</span>');
+    }
     const cls = 'cal-item cal-item--' + state
       + (overdue ? ' cal-item--overdue' : '')
       + (item.id === selectedId ? ' cal-item--selected' : '');
@@ -2089,6 +2106,98 @@
   }
   if (calDayListEl) calDayListEl.addEventListener('click', handleCalendarListClick);
   if (calUnschListEl) calUnschListEl.addEventListener('click', handleCalendarListClick);
+
+  // ---- 在日历里手动添加待办 ----
+  // 只写进本机的 items（跟着 localStorage 走），不碰群聊原文，也不伪造提取依据：
+  // 「解析」里只写"手动添加"，说清它从哪来。
+  let addReturnFocus = null;
+
+  function setAddStatus(msg, kind) {
+    if (!addStatusEl) return;
+    addStatusEl.textContent = msg || '';
+    addStatusEl.className = 'ai-why' + (kind === 'ok' ? ' ai-note--ok' : kind === 'warn' ? ' ai-note--warn' : '');
+  }
+
+  function openAddDialog() {
+    if (!addDialogEl) return;
+    ensureCalendarState();
+    addReturnFocus = document.activeElement;
+    addTextEl.value = '';
+    addDateEl.value = calSelected || todayKey();
+    setAddStatus('');
+    addDialogEl.hidden = false;
+    addTextEl.focus();
+  }
+
+  function closeAddDialog() {
+    if (!addDialogEl) return;
+    addDialogEl.hidden = true;
+    if (addReturnFocus && addReturnFocus.focus) addReturnFocus.focus();
+    addReturnFocus = null;
+  }
+
+  function addManualItem() {
+    const text = addTextEl.value.trim();
+    if (!text) {
+      setAddStatus('先写点要做什么。', 'warn');
+      addTextEl.focus();
+      return;
+    }
+    const key = addDateEl.value || null;
+    if (key && !/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+      setAddStatus('日期格式不对，请重新选一天。', 'warn');
+      return;
+    }
+    const item = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      text: text,
+      state: 'todo',
+      done: false,
+      type: 'task',
+      deadline: null,
+      source: '手动添加',
+      relevant: false,
+      conditions: [],
+      reasons: ['在日历里手动添加'],
+      highlights: [],
+      manual: true,
+      raw: text,
+      line: null,
+      dueDate: key,
+      dueDateSource: 'manual',
+      dueDateInferred: false
+    };
+    items.unshift(item);   // 放在最前面，加完立刻能在列表里看到
+    filter = 'todo';
+    setActiveTab();
+    if (key) {
+      const d = keyToDate(key);
+      if (d) { calYear = d.getFullYear(); calMonth = d.getMonth(); calSelected = key; }
+    }
+    closeAddDialog();
+    save();
+    renderAll();   // 日历视图下 renderAll 会一并重画日历
+    announce(key ? '已添加到 ' + fmtDayCN(key) : '已添加，放在未排期');
+  }
+
+  if (calAddBtn) calAddBtn.addEventListener('click', openAddDialog);
+  if (addCancelBtn) addCancelBtn.addEventListener('click', closeAddDialog);
+  if (addConfirmBtn) addConfirmBtn.addEventListener('click', addManualItem);
+  if (addDialogEl) {
+    addDialogEl.addEventListener('click', function (e) {
+      if (e.target.hasAttribute && e.target.hasAttribute('data-add-close')) closeAddDialog();
+    });
+    addDialogEl.addEventListener('keydown', function (e) {
+      // 文本框里回车是换行；Ctrl / Cmd + 回车才提交。
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        addManualItem();
+      }
+    });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (addDialogEl && !addDialogEl.hidden && e.key === 'Escape') closeAddDialog();
+  });
 
   // 手动排期：原文截止说法不变，只改 dueDate。改完把日历翻到那一天，让人看见条目挪过去了。
   function setItemDueDate(item, key) {
@@ -2504,39 +2613,6 @@
   batchDeleteBtn.addEventListener('click', batchDelete);
   batchExitBtn.addEventListener('click', exitSelectMode);
   undoBtn.addEventListener('click', undoDelete);
-
-  const exportBtn = document.getElementById('export');
-  exportBtn.addEventListener('click', function () {
-    const data = items.map(function (i) {
-      const row = {
-        text: displayText(i),
-        deadline: i.deadline,
-        source: i.source,
-        relevant: i.relevant,
-        type: i.type || 'task',
-        state: i.done ? 'done' : i.state,
-        dueDate: i.dueDate || null,
-        dueDateSource: i.dueDateSource || null,
-        why: i.reasons
-      };
-      // AI 提取的条目，把证据和原始行一并导出，数据来源可追溯
-      if (i.aiExtracted) {
-        row.evidence = i.evidence;
-        row.original = i.raw;
-        row.line = i.line;
-      }
-      return row;
-    });
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = '待办导出.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
 
   // ============================================================
   // 主题：纸白 / 牛皮纸
