@@ -13,23 +13,28 @@
       }
     } catch (e) { /* 隐私模式忽略 */ }
 
-    // 开屏只对首次访问播放；减弱动效时直接跳过，别先盖住再淡出。
+    // 开屏每天只播一次（当天第一次打开）；减弱动效时直接跳过，别先盖住再淡出。
     // 在 head 里落类名，避免首帧闪一下完整页面。
-    // ?intro=1 显式预览：无视「已看过」和系统减弱动效，完整播一遍且不写已看标记；
+    // 日期按本地时区取，存成 YYYY-MM-DD；跨天后再打开会重新播。
+    // ?intro=1 显式预览：无视「今天已播过」和系统减弱动效，完整播一遍且不写当天日期；
     // ?intro=0 临时关闭。调试和验收都用得着，不用去清 localStorage。
     try {
       var introParam = new URLSearchParams(location.search).get('intro');
-      var introSeen = localStorage.getItem('group-chat-todo:intro-seen') === '1';
+      var introNow = new Date();
+      var introToday = introNow.getFullYear() + '-'
+        + String(introNow.getMonth() + 1).padStart(2, '0') + '-'
+        + String(introNow.getDate()).padStart(2, '0');
+      var introSeenToday = localStorage.getItem('group-chat-todo:intro-day') === introToday;
       var introReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (introParam === '1') {
         document.documentElement.classList.add('intro-lock', 'intro-force');
-      } else if (introParam === '0' || introSeen || introReduce) {
+      } else if (introParam === '0' || introSeenToday || introReduce) {
         document.documentElement.classList.add('intro-skip');
       } else {
         document.documentElement.classList.add('intro-lock');
       }
     } catch (e) {
-      // 存储不可用（隐私模式等）时仍按首次访问处理；
+      // 存储不可用（隐私模式等）时当作今天还没播过，照常显示；
       // 若这是显式预览，减弱动效下也要能看见。
       document.documentElement.classList.add('intro-lock');
       if (typeof introParam !== 'undefined' && introParam === '1') {
@@ -49,8 +54,8 @@
   <!-- 着色器背景：主题色在纸面上缓慢晕染漂移 -->
   <canvas class="bg" id="bg-canvas" aria-hidden="true"></canvas>
 
-  <!-- 开屏：首次访问时把「从群聊里拎出待办」演一遍。
-       纯装饰，aria-hidden；点击 / 任意键 / 滚轮可跳过，之后不再出现。
+  <!-- 开屏：每天第一次打开时把「从群聊里拎出待办」演一遍。
+       纯装饰，aria-hidden；点击 / 任意键 / 滚轮可跳过，当天不再出现。
        文案用 sample-chat.txt 里的合成数据。 -->
   <div class="intro" id="intro" aria-hidden="true">
     <div class="intro__stage">

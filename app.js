@@ -3035,9 +3035,9 @@
   reflectTheme(currentTheme());
 
   // ============================================================
-  // 开屏：首次访问播放一次「从群聊里拎出待办」。
+  // 开屏：每天第一次打开播放一次「从群聊里拎出待办」。
   // 点击 / 任意键 / 滚轮跳过；减弱动效时直接不播。
-  // 逻辑只负责：锁滚动、锁交互、跳过、清理、记已看。
+  // 逻辑只负责：锁滚动、锁交互、跳过、清理、记今天已播。
   // 动画本身全在 CSS 里，JS 不参与逐帧。
   // ============================================================
   (function initIntro() {
@@ -3069,6 +3069,16 @@
       return;
     }
 
+    // 记录「今天已经播过」：一决定要播就写，跳过或当天反复刷新都不会重播。
+    // 日期按本地时区取，跨天后自然对不上，第二天打开会再播一次。
+    const now = new Date();
+    const today = now.getFullYear() + '-'
+      + String(now.getMonth() + 1).padStart(2, '0') + '-'
+      + String(now.getDate()).padStart(2, '0');
+    if (!force) {
+      try { localStorage.setItem('group-chat-todo:intro-day', today); } catch (e) { /* 隐私模式忽略 */ }
+    }
+
     // 纸面盖着的同时锁住滚动和焦点，避免 Tab / 滚轮跑到后面的页面。
     root.classList.add('intro-lock');
     if (page) page.inert = true;
@@ -3088,10 +3098,6 @@
       window.removeEventListener('wheel', onSkip);
       unlockPage();
       introEl.remove();
-      // 预览不消耗「首次」：下次正常打开仍然会播。
-      if (!force) {
-        try { localStorage.setItem('group-chat-todo:intro-seen', '1'); } catch (e) { /* 隐私模式忽略 */ }
-      }
     }
 
     function skip() {
