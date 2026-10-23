@@ -71,7 +71,8 @@ AI、日历与主题已经写回 [PRD.md](PRD.md) 的「做什么」；下面五
 - `index.html` / `styles.css` / `app.js` —— 页面、样式、提取逻辑
 - `bg-shader.js` —— WebGL 背景着色器（随主题换色）
 - `PRD.md` —— 需求边界与验收标准
-- `CLAUDE.md` —— 给 AI 协作者看的规则
+- `AGENTS.md` —— 给 AI 协作者看的规则（先读什么、可以改哪里、怎么检查、哪些事不能做）
+- `CLAUDE.md` —— 用 `@AGENTS.md` 引入同一份规则，供 Claude Code 自动读取，不另存副本
 - `sample-chat.txt` —— 合成群聊样本
 - `demo.png` —— 界面演示截图
 
