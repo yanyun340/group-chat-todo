@@ -5,6 +5,9 @@
 --------
 双击 index.html，用浏览器打开即可。不需要安装、不需要联网、不需要启动服务器。
 
+也可以直接在线试用：https://yanyun340.github.io/group-chat-todo/
+功能和本地版一致，数据同样只存在你自己的浏览器里。
+
 请保持以下文件在同一个文件夹里，少一个页面就会缺样式或功能：
   index.html
   styles.css
