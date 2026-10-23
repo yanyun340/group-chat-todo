@@ -3,6 +3,13 @@
 
   // ===== 提取规则：集中在这里，改规则只动这一处 =====
   const ACTION_WORDS = ['提交', '别忘了', '别忘', '报名', '完成', '通知', '安排', '参加', '回复', '填写', '上传', '打印', '准备', '开会', '考试', '截止', '提醒', '缴费', '领取', '收集', '签到', '必须', '须', '交', '做', '写', '带'];
+  // 群里约的活动也是"要做的事"：「周六周天要打球」不是在陈述天气。
+  // 这类句子没有祈使词、也没有"提交/报名"那种任务动词，旧规则只认出了时间，
+  // 于是把一条明确约好的事放进「待确认」——它缺的只是一个"动作"身份。
+  // 只收多字活动名，避免「打」在「打折 / 打算 / 打车」里误命中。
+  const ACTIVITY_WORDS = ['打球', '打篮球', '打羽毛球', '打乒乓球', '打网球', '打排球', '踢球', '踢足球',
+    '跑步', '游泳', '健身', '爬山', '骑行', '徒步', '露营', '钓鱼', '滑雪', '滑冰',
+    '逛街', '看电影', '看球', '排练', '训练', '聚餐'];
   // 单字动词容易在别的词里误命中：「交流」「带来」「须知」都不是待办。
   // 只排除单字前后紧跟这些字的组合；「提交」「报名」这类双字动词不受影响。
   const SINGLE_ACTION_SKIP_NEXT = { '交': '流往换集融锋汇际谈友易通涉代', '带': '来动头领', '须': '知' };
@@ -18,7 +25,9 @@
   // 否定 / 已完成 / 重复：否定词要贴着动作词；中间被「记得 / 请」隔开就不算否定。
   const NEG_PREFIX_RE = /(?:已经|已|不用|无需|不必|不需要|无须|没有|没|重复)(?:再)?/;
   // 取消通知：「今晚的选修课取消了」是作废信息，不是待办。
-  const CANCEL_NOTICE_RE = /(?:课|会议|活动|考试|讲座|比赛|训练|班车|安排|聚会|见面会)[^，。！？；]{0,8}(?:取消|作废)/;
+  // 活动词也全算——「周六打球取消」「周末聚餐取消」取消的是活动本身，不是新任务。
+  const CANCEL_NOTICE_RE = new RegExp('(?:课|会议|活动|考试|讲座|比赛|班车|安排|聚会|见面会|球局|'
+    + ACTIVITY_WORDS.join('|') + ')[^，。！？；]{0,8}(?:取消|作废)');
   // 疑问句：「这道题怎么做」「中午一起吃饭吗」是聊天。带请求词或祈使词的保留。
   const QUESTION_END_RE = /(?:吗|呢|嘛)[。.!！?？\s]*$/;
   const QUESTION_WORD_RE = /(?:怎么|怎样|为什么|为啥|什么|啥|哪个|哪天|哪次|哪里|多少|几点|多少钱)/;
@@ -82,7 +91,7 @@
   // 走本地规则，页面永远不依赖网络。任何一条 AI 输出都必须带原文证据才算数。
   const AI_CFG_KEY = 'group-chat-todo:ai';
   const AI_CACHE_KEY = 'group-chat-todo:ai-cache';
-  const AI_PROMPT_VERSION = '2';   // 改提示词就 +1，旧缓存自动失效
+  const AI_PROMPT_VERSION = '3';   // 改提示词就 +1，旧缓存自动失效
   const AI_MAX_CHAT = 12000;       // 一次最多处理的字数，超出部分不发送
   const AI_PRESETS = {
     deepseek: { baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat' },
@@ -543,13 +552,16 @@
     return null;
   }
 
-  // 给一批条目补上日历日期。锚点用「导入时间」，刷新后重新算也不会漂移。
+  // 给一批条目补上日历日期。锚点用这条自己的导入时间（老数据退回传入的全局时间），
+  // 刷新后重新算也不会漂移。
   // 已经带 dueDate 的（包括手动清空后的 null）不再动。
   function ensureDueDates(list, anchor) {
     (list || []).forEach(function (item) {
       if (item.dueDate !== undefined) return;
-      if (anchor == null) { item.dueDate = null; item.dueDateSource = null; return; }
-      const r = resolveDeadline(item.deadline, anchor);
+      // 每条用各自的导入时间当锚点；没有逐条时间的老数据才用传进来的。
+      const at = item.importedAt != null ? item.importedAt : anchor;
+      if (at == null) { item.dueDate = null; item.dueDateSource = null; return; }
+      const r = resolveDeadline(item.deadline, at);
       item.dueDate = r ? r.date : null;
       item.dueDateSource = r ? 'auto' : null;
       item.dueDateInferred = r ? r.inferred : false;
@@ -598,9 +610,10 @@
   }
 
   // 所有动作词命中（保留位置），否定判断要用；无效命中直接跳过。
+  // 活动词跟动作词一样参与判断和"谁信息量更大"的挑选。
   function actionHits(text) {
     const hits = [];
-    for (const cand of ACTION_WORDS) {
+    for (const cand of ACTION_WORDS.concat(ACTIVITY_WORDS)) {
       let from = 0;
       while (from <= text.length) {
         const i = text.indexOf(cand, from);
@@ -742,13 +755,12 @@
     // 全是否定 / 已完成：这条不是新待办。
     // 但如果同时还有请求词或时间，说明这段话里另有信息，留着让人看。
     if (!action && bareHits.length && !reqWord && !deadline) return null;
-    // 取消通知：没有动作词时，它就是一条作废信息。
-    if (!action && !reqWord && CANCEL_NOTICE_RE.test(content)) return null;
 
     if (action) {
+      const actionKind = ACTIVITY_WORDS.indexOf(action) >= 0 ? '活动' : '关键词';
       reasons.push(actionInParen
-        ? '关键词「' + action + '」出现在括号里的假设句中，不算交代你做的事'
-        : '关键词「' + action + '」');
+        ? actionKind + '「' + action + '」出现在括号里的假设句中，不算交代你做的事'
+        : actionKind + '「' + action + '」');
       // 括号里的命中不当作"命中了原文关键片段"高亮——高亮是给"为什么留下这条"作证的，
       // 一个被判定为"不算数"的词不该被标黄。
       if (!actionInParen) highlights.push(action);
@@ -765,6 +777,11 @@
         highlights.push(imperative);
       }
     }
+
+    // 取消通知：被取消 / 作废的那件事不是待办——哪怕句子里正好有动作词。
+    //「周六考试取消了」「周末打球活动取消」都是在说"不用去了"。
+    // 但如果同时有祈使或请求，那是让人去取消（"记得取消场地""帮我取消预约"），仍要留下。
+    if (!reqWord && !imperative && CANCEL_NOTICE_RE.test(content)) return null;
 
     // 规则骨架：括号里的「如果…就…」成对拎出来，解析里单列。
     // 这条是**正面**信息——它规定了什么，而不只是"它为什么不是任务"。
@@ -906,7 +923,9 @@
     const deadline = item.deadline ? '<span class="chip chip--deadline">' + escapeHTML(item.deadline) + '</span>' : '';
     const source = item.source ? '<span class="source">' + escapeHTML(item.source) + '</span>' : '';
     const me = item.relevant ? '<span class="chip chip--me">与你相关</span>' : '';
-    const imported = importedAt ? '<span class="imported">导入于 ' + fmtDate(importedAt) + '</span>' : '';
+    // 每条记着自己的导入时间；旧数据没有这一项时才退回全局时间。
+    const stamp = item.importedAt != null ? item.importedAt : importedAt;
+    const imported = stamp ? '<span class="imported">导入于 ' + fmtDate(stamp) + '</span>' : '';
     // 多选模式下，左边的框换成"选中"而不是"完成"——整行点击的含义也跟着变
     const toggle = selectMode
       ? '<input type="checkbox" class="pick"' + (isPicked ? ' checked' : '') + ' aria-label="选中这条待办">'
@@ -1226,7 +1245,16 @@
       if (!raw) return;
       const data = JSON.parse(raw);
       if (data.chat != null) chatEl.value = data.chat;
-      if (Array.isArray(data.items)) items = data.items;
+      if (Array.isArray(data.items)) {
+        items = data.items;
+        // 旧数据没有逐条导入时间：用当时记录的全局导入时间补上。
+        // 之后新导入的条目各记各的，「导入于」不会全变成最近一次。
+        items.forEach(function (item) {
+          if (item && item.importedAt == null && data.importedAt != null) {
+            item.importedAt = data.importedAt;
+          }
+        });
+      }
       if (data.importedAt != null) importedAt = data.importedAt;
       // 旧版本存的数据没有 dueDate：按当时记录的导入时间补一遍，结果稳定。
       ensureDueDates(items, importedAt);
@@ -1235,44 +1263,96 @@
 
   // ---- 事件 ----
   // 把一批条目落到界面上：本地规则、AI、AI 失败回退都走这里，收尾不会各写一套。
+  // 新导入是往清单里**追加**，不是替换：同一件事（去掉标点空白后正文相同）跳过，
+  // 保留已有条目的完成状态、手动排期和顺序。这样连着贴几段群聊，前面的待办不会消失。
   function applyExtractResult(list, opts) {
     opts = opts || {};
-    items = list;
-    filter = 'todo';
-    resetSelection();
-    importedAt = items.length ? Date.now() : null; // 有结果才记录导入时间
-    // 相对日期以这次导入时间为锚点；AI 条目也走同一套本地日期规则。
-    ensureDueDates(items, importedAt);
+    const fresh = list || [];
+    const now = Date.now();
+
+    const known = new Map();
+    items.forEach(function (it) {
+      const key = normalize(it.text || '');
+      if (!known.has(key)) known.set(key, it);
+    });
+    let added = 0;
+    let upgraded = 0;
+    fresh.forEach(function (it) {
+      const key = normalize(it.text || '');
+      const old = known.get(key);
+      if (old) {
+        // 同一句话已经在清单里：保留原条目，完成状态和手动排期都不动。
+        // 但如果它原本拿不准、这次规则 / AI 已明确判成待办，就顺手转正——
+        // 否则重新提取一遍，旧的误判仍会卡在「待确认」里。
+        if (old.state === 'confirm' && !old.done && it.state === 'todo') {
+          old.state = 'todo';
+          old.reasons = (old.reasons || []).concat('重新提取时判定为待办');
+          upgraded++;
+        }
+        return;
+      }
+      known.set(key, it);
+      it.importedAt = now; // 每条记下自己这一批的导入时间
+      items.push(it);
+      added++;
+    });
+
+    if (added) {
+      importedAt = now; // 相对日期以这批新条目的导入时间为锚点
+      filter = 'todo';
+      resetSelection();
+    } else if (upgraded) {
+      // 转正后这条可能离开当前标签（比如从「待确认」里消失），
+      // 收起点开的解析，免得面板还留着转正前的状态。
+      resetSelection();
+    }
+    // 只补还没算过日期的条目（新增的那些）；已有条目原样不动。
+    ensureDueDates(items, added ? now : importedAt);
     renderAll();
     setActiveTab();
-    if (items.length === 0) {
-      if (view === 'calendar') setView('list');
-      setHint(opts.emptyHint || '没识别到待办：这段文字里没有明显的待办、截止时间或 @你。', 'warn');
-      save(); // 空结果也要落盘，否则刷新会把上一批旧条目又带回来
+
+    if (added === 0) {
+      if (items.length === 0) {
+        if (view === 'calendar') setView('list');
+        setHint(opts.emptyHint || '没识别到待办：这段文字里没有明显的待办、截止时间或 @你。', 'warn');
+      } else if (fresh.length) {
+        let msg = '这段文字里的 ' + fresh.length + ' 条待办清单里都有，没有重复添加';
+        if (upgraded > 0) msg += '，其中 ' + upgraded + ' 条由待确认转为待办';
+        msg += '；原有 ' + items.length + ' 条都保留着。';
+        setHint(msg, upgraded > 0 ? 'ok' : 'warn');
+      } else {
+        const base = (opts.emptyHint || '没识别到新待办').replace(/[。．.]$/, '');
+        setHint(base + '；原有 ' + items.length + ' 条都保留着。', 'warn');
+      }
+      save();
       return;
     }
+
     listEl.classList.add('list--enter');
     window.setTimeout(function () { listEl.classList.remove('list--enter'); }, 900);
-    setHint(opts.hint, opts.kind || 'ok');
+    let hint = (opts.hint || ('已提取 ' + fresh.length + ' 件待办。')).replace(/[。．.]$/, '');
+    const skipped = fresh.length - added;
+    if (upgraded > 0) hint += '，' + upgraded + ' 条由待确认转为待办';
+    if (skipped - upgraded > 0) hint += '，' + (skipped - upgraded) + ' 条清单里已有';
+    hint += '；清单共 ' + items.length + ' 条。';
+    setHint(hint, opts.kind || 'ok');
     save();
   }
 
   async function doExtract() {
-    // 重新提取会换掉整批条目，多选的选中项全部失效，顺手退出多选
+    // 重新提取会重新选一次条目，多选的选中项全部失效，顺手退出多选
     if (selectMode) exitSelectMode();
     aiSeq++; // 在途的旧结果作废，不能再写到新一批条目上
     aiPendingText = null;
     hideUndo(); // 上一批的「撤销」不能把旧条目塞进新结果里
     const text = chatEl.value;
     if (!text.trim()) {
-      items = [];
-      if (view === 'calendar') setView('list');
-      resetSelection();
-      renderAll();
-      setActiveTab();
+      // 空输入只提示，不动已有条目——手滑点了提取不该把清单清空。
       setAINote('');
-      setHint('先把群聊记录贴进来，再点提取。', 'warn');
-      save();
+      setHint(items.length
+        ? '先把群聊记录贴进来，再点提取；清单里原有的 ' + items.length + ' 条都还在。'
+        : '先把群聊记录贴进来，再点提取。', 'warn');
+      save(); // 只记下"输入台是空的"，条目原样不动
       return;
     }
     setAINote('');
@@ -1699,6 +1779,7 @@
       '5. source 填说这句话的昵称（群聊行开头），没有就填空字符串。',
       '6. type 只能是 task（要做的事）、reminder（提醒）、request（请求帮忙）、note（说明性规则）之一。',
       '7. state 只能是 todo（明确要做，且有明确时间或明确指向你/全班）或 confirm（拿不准、像玩笑/假设/闲谈）。',
+      '   注意：群里约好的活动只要带明确时间就是 todo，例如「周六周天要打球」「周三晚上9点打球」「周末一起跑步」——不要因为语气随意、没写「记得」「必须」就放进 confirm。confirm 只留给真正没定下来、像玩笑或假设的事。',
       '8. relevant 只有明确与你有关时才为 true：@我、@全体成员、我班/全班、或直接交给你。',
       '9. reasons 是 1-3 条简短依据，引用原文里的词，例如「时间「10.21」」「面向全班「我班」」「关键词「提交」」。',
       '',
@@ -1852,7 +1933,7 @@
     };
   }
 
-  // 一次 AI 提取：整段群聊进，整批待办出。旧的条目会被这一整批替换。
+  // 一次 AI 提取：整段群聊进，整理出的条目追加到现有清单（重复的跳过）。
   async function aiExtract(text) {
     const seq = ++aiSeq;
     if (aiBusy) {
@@ -2407,6 +2488,7 @@
       reasons: ['在日历里手动添加'],
       highlights: [],
       manual: true,
+      importedAt: Date.now(),
       raw: text,
       line: null,
       dueDate: key,
