@@ -194,6 +194,17 @@
   const addCancelBtn = document.getElementById('add-cancel');
   const addConfirmBtn = document.getElementById('add-confirm');
   const themeToggleBtn = document.getElementById('theme-toggle');
+  const backupOpenBtn = document.getElementById('backup-open');
+  const backupDialogEl = document.getElementById('backup-dialog');
+  const backupCloseBtn = document.getElementById('backup-close');
+  const backupExportBtn = document.getElementById('backup-export');
+  const backupImportBtn = document.getElementById('backup-import');
+  const backupFileEl = document.getElementById('backup-file');
+  const backupSummaryEl = document.getElementById('backup-summary');
+  const backupStatusEl = document.getElementById('backup-status');
+  const backupCopyBtn = document.getElementById('backup-copy');
+  const backupCopyFieldEl = document.getElementById('backup-copyfield');
+  const backupCopyTextEl = document.getElementById('backup-copytext');
 
   const aiSettingsBtn = document.getElementById('ai-settings');
   const aiNoteEl = document.getElementById('ai-note');
@@ -1260,6 +1271,299 @@
       ensureDueDates(items, importedAt);
     } catch (e) { /* 损坏则忽略 */ }
   }
+
+  // ---- 备份 / 恢复：换浏览器时把本机数据带走 ----
+  // 只导出群聊原文和待办；AI 配置（含 API Key）和主题不进文件。
+  // 导入采用合并而不是替换：已有条目一律保留，正文重复的跳过——
+  // 和「再次提取是追加」同一个原则，手动导入不该把清单清空。
+  function freshItemId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function setBackupStatus(msg, kind) {
+    if (!backupStatusEl) return;
+    backupStatusEl.textContent = msg || '';
+    backupStatusEl.className = 'ai-why' + (kind === 'ok' ? ' ai-note--ok' : kind === 'warn' ? ' ai-note--warn' : '');
+  }
+
+  function updateBackupSummary() {
+    if (!backupSummaryEl) return;
+    const done = items.filter(function (it) { return it.done; }).length;
+    const open = items.length - done;
+    const lines = chatEl.value.trim() ? chatEl.value.trim().split(/\r?\n/).length : 0;
+    backupSummaryEl.textContent = '当前本机：' + open + ' 条未完成、' + done + ' 条已完成；群聊原文 ' + lines + ' 行。';
+  }
+
+  function backupFileName() {
+    const d = new Date();
+    return '话里有事-备份-' + d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + '.json';
+  }
+
+  function backupJSON() {
+    return JSON.stringify({
+      app: 'group-chat-todo',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      chat: chatEl.value,
+      importedAt: importedAt,
+      items: items
+    }, null, 2);
+  }
+
+  function downloadBackup(json) {
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = backupFileName();
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  async function exportBackup() {
+    const json = backupJSON();
+    // Chrome 把 file:// 当不透明来源，会拦掉普通下载——双击 index.html 打开时，
+    // 点了「导出」只会显示下载失败。本地文件模式优先走系统「另存为」；
+    // 用户取消就停下，接口不可用或权限被拒再退回普通下载。
+    if (location.protocol === 'file:' && window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: backupFileName(),
+          types: [{ description: '话里有事备份', accept: { 'application/json': ['.json'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(json);
+        await writable.close();
+        setBackupStatus('已导出 ' + items.length + ' 条待办到「' + handle.name + '」。', 'ok');
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') {
+          setBackupStatus('已取消导出。');
+          return;
+        }
+        // 其它错误（接口被禁、权限不足）继续走普通下载。
+      }
+    }
+    try {
+      downloadBackup(json);
+      setBackupStatus('已导出 ' + items.length + ' 条待办，文件已开始下载。', 'ok');
+    } catch (e) {
+      setBackupStatus('导出失败：浏览器不允许下载，请改用「复制备份」。', 'warn');
+    }
+  }
+
+  // 下载被拦时的第二条路：复制到剪贴板，让用户自己存成 .json。
+  // 剪贴板权限也可能被拒，那就把内容摊在弹窗里手动全选复制。
+  async function copyBackup() {
+    const json = backupJSON();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(json);
+        setBackupStatus('备份内容已复制。粘贴到 .json 文件里，换浏览器后用「导入备份」选它。', 'ok');
+        return;
+      } catch (e) { /* 权限被拒，展开文本框 */ }
+    }
+    if (backupCopyTextEl && backupCopyFieldEl) {
+      backupCopyTextEl.value = json;
+      backupCopyFieldEl.hidden = false;
+      backupCopyTextEl.focus();
+      backupCopyTextEl.select();
+      setBackupStatus('自动复制被浏览器拒绝，已展开备份内容：按 Ctrl / Cmd + C 复制。', 'warn');
+    } else {
+      setBackupStatus('这个浏览器不允许自动复制，请改用「导出备份」。', 'warn');
+    }
+  }
+
+  function cleanTextList(v, max, each) {
+    if (!Array.isArray(v)) return [];
+    const out = [];
+    for (const s of v) {
+      if (typeof s !== 'string' || !s.trim()) continue;
+      out.push(s.trim().slice(0, each));
+      if (out.length >= max) break;
+    }
+    return out;
+  }
+
+  // 只收已知字段，缺的补默认值；正文为空、类型不对的整条丢掉。
+  // 这样导入一个手改过、或别的工具生成的文件，也不会把奇怪字段带进渲染。
+  function sanitizeBackupItem(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const text = typeof raw.text === 'string' ? raw.text.trim() : '';
+    if (!text) return null;
+    const item = {
+      id: typeof raw.id === 'string' && raw.id ? raw.id.slice(0, 64) : freshItemId(),
+      text: text.slice(0, 2000),
+      deadline: typeof raw.deadline === 'string' ? raw.deadline.slice(0, 40) : null,
+      source: typeof raw.source === 'string' ? raw.source.slice(0, 40) : '',
+      relevant: raw.relevant === true,
+      type: ['task', 'reminder', 'request', 'note'].indexOf(raw.type) >= 0 ? raw.type : 'task',
+      state: raw.state === 'confirm' ? 'confirm' : 'todo',
+      done: raw.done === true,
+      conditions: [],
+      reasons: cleanTextList(raw.reasons, 10, 200),
+      highlights: cleanTextList(raw.highlights, 10, 200),
+      importedAt: typeof raw.importedAt === 'number' && isFinite(raw.importedAt) ? raw.importedAt : Date.now()
+    };
+    if (Array.isArray(raw.conditions)) {
+      raw.conditions.slice(0, 10).forEach(function (c) {
+        if (!c || typeof c !== 'object') return;
+        const when = typeof c.when === 'string' ? c.when.trim().slice(0, 120) : '';
+        const then = typeof c.then === 'string' ? c.then.trim().slice(0, 120) : '';
+        if (when && then) item.conditions.push({ when: when, then: then });
+      });
+    }
+    if (typeof raw.raw === 'string') item.raw = raw.raw.slice(0, 4000);
+    if (typeof raw.evidence === 'string') item.evidence = raw.evidence.slice(0, 400);
+    if (typeof raw.line === 'number' && isFinite(raw.line)) item.line = raw.line;
+    if (raw.aiExtracted === true) item.aiExtracted = true;
+    if (raw.manual === true) item.manual = true;
+    if (raw.dueDate === null) {
+      // 手动清空过的排期要保住，不能按原文重新推一遍。
+      item.dueDate = null;
+      item.dueDateSource = null;
+    } else if (typeof raw.dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.dueDate)) {
+      item.dueDate = raw.dueDate;
+      item.dueDateSource = raw.dueDateSource === 'manual' ? 'manual' : 'auto';
+      item.dueDateInferred = raw.dueDateInferred === true;
+    }
+    return item;
+  }
+
+  function applyBackup(data) {
+    if (!data || typeof data !== 'object' || !Array.isArray(data.items)) {
+      setBackupStatus('这个文件不像「话里有事」的备份：缺少待办列表。', 'warn');
+      return;
+    }
+    const incoming = [];
+    data.items.slice(0, 5000).forEach(function (raw) {
+      const it = sanitizeBackupItem(raw);
+      if (it) incoming.push(it);
+    });
+    if (!incoming.length && data.items.length) {
+      setBackupStatus('备份里的条目都没有可用正文，未导入任何内容。', 'warn');
+      return;
+    }
+
+    const known = new Set();
+    const ids = new Set();
+    items.forEach(function (it) {
+      known.add(normalize(String(it.text || '')));
+      if (it.id) ids.add(it.id);
+    });
+
+    let added = 0;
+    let skipped = 0;
+    incoming.forEach(function (it) {
+      const key = normalize(it.text);
+      if (known.has(key)) { skipped++; return; }
+      while (ids.has(it.id)) it.id = freshItemId();
+      ids.add(it.id);
+      known.add(key);
+      items.push(it);
+      added++;
+    });
+
+    let chatRestored = false;
+    let chatKept = false;
+    if (typeof data.chat === 'string' && data.chat.trim()) {
+      if (!chatEl.value.trim()) {
+        chatEl.value = data.chat;
+        chatRestored = true;
+      } else if (data.chat !== chatEl.value) {
+        chatKept = true;
+      }
+    }
+    if (importedAt == null && typeof data.importedAt === 'number' && isFinite(data.importedAt)) {
+      importedAt = data.importedAt;
+    }
+
+    ensureDueDates(items, importedAt);
+    if (added) {
+      filter = 'todo';
+      resetSelection();
+    }
+    save();
+    renderAll();
+    setActiveTab();
+
+    const parts = [];
+    parts.push(added
+      ? '已导入 ' + added + ' 条待办'
+      : (skipped ? '备份里的待办都已在清单里' : '备份里没有待办条目'));
+    if (skipped && added) parts.push('跳过 ' + skipped + ' 条重复');
+    if (chatRestored) parts.push('群聊原文已恢复');
+    if (chatKept) parts.push('输入台已有别的原文，保留原样');
+    if (data.items.length > 5000) parts.push('文件条目超过 5000，只处理了前 5000 条');
+    parts.push('现在共 ' + items.length + ' 条');
+    setBackupStatus(parts.join('；') + '。', 'ok');
+    updateBackupSummary();
+  }
+
+  function readBackupFile(file) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setBackupStatus('文件超过 5 MB，不像是本应用的备份。', 'warn');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = function () { setBackupStatus('读取文件失败，请再试一次。', 'warn'); };
+    reader.onload = function () {
+      let data;
+      try { data = JSON.parse(String(reader.result)); }
+      catch (e) { setBackupStatus('这个文件不是有效的 JSON，无法导入。', 'warn'); return; }
+      applyBackup(data);
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  let backupReturnFocus = null;
+
+  function openBackupDialog() {
+    if (!backupDialogEl) return;
+    backupReturnFocus = document.activeElement;
+    setBackupStatus('');
+    if (backupCopyFieldEl) backupCopyFieldEl.hidden = true;
+    updateBackupSummary();
+    backupDialogEl.hidden = false;
+    if (backupExportBtn) backupExportBtn.focus();
+  }
+
+  function closeBackupDialog() {
+    if (!backupDialogEl) return;
+    backupDialogEl.hidden = true;
+    if (backupReturnFocus && backupReturnFocus.focus) backupReturnFocus.focus();
+    backupReturnFocus = null;
+  }
+
+  if (backupOpenBtn) backupOpenBtn.addEventListener('click', openBackupDialog);
+  if (backupCloseBtn) backupCloseBtn.addEventListener('click', closeBackupDialog);
+  if (backupExportBtn) backupExportBtn.addEventListener('click', exportBackup);
+  if (backupCopyBtn) backupCopyBtn.addEventListener('click', copyBackup);
+  if (backupImportBtn) {
+    backupImportBtn.addEventListener('click', function () {
+      if (!backupFileEl) return;
+      backupFileEl.value = '';   // 同一个文件连选两次也要能触发 change
+      backupFileEl.click();
+    });
+  }
+  if (backupFileEl) {
+    backupFileEl.addEventListener('change', function () {
+      const f = backupFileEl.files && backupFileEl.files[0];
+      readBackupFile(f);
+      backupFileEl.value = '';
+    });
+  }
+  if (backupDialogEl) {
+    backupDialogEl.addEventListener('click', function (e) {
+      if (e.target.hasAttribute && e.target.hasAttribute('data-backup-close')) closeBackupDialog();
+    });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (backupDialogEl && !backupDialogEl.hidden && e.key === 'Escape') closeBackupDialog();
+  });
 
   // ---- 事件 ----
   // 把一批条目落到界面上：本地规则、AI、AI 失败回退都走这里，收尾不会各写一套。

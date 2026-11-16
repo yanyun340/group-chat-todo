@@ -87,13 +87,21 @@
 
   <header class="topbar">
     <span class="brand">话里有事<span class="brand__star" aria-hidden="true">*</span></span>
-    <span class="topbar__tags">
-      <span class="tag tag--acid">本地运行</span>
-      <span class="tag">本地规则 · AI 可选</span>
-      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" title="切换纸白 / 牛皮纸主题">
-        <span class="theme-toggle__swatch" aria-hidden="true"></span>
-        <span>牛皮纸</span>
-      </button>
+    <span class="topbar__right">
+      <span class="topbar__tags">
+        <span class="tag tag--acid">本地运行</span>
+        <span class="tag">本地规则 · AI 可选</span>
+      </span>
+      <span class="topbar__actions">
+        <button type="button" id="backup-open" class="topbar__btn" title="备份 / 恢复本机数据">
+          <span class="topbar__btn-icon" aria-hidden="true">⇅</span>
+          <span>备份</span>
+        </button>
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" title="切换纸白 / 牛皮纸主题">
+          <span class="theme-toggle__swatch" aria-hidden="true"></span>
+          <span>牛皮纸</span>
+        </button>
+      </span>
     </span>
   </header>
 
@@ -311,6 +319,33 @@
   <div class="undo" id="undo" hidden role="status" aria-live="polite">
     <span class="undo__text" id="undo-text"></span>
     <button type="button" class="btn btn--sm" id="undo-btn">撤销</button>
+  </div>
+
+  <!-- 备份 / 恢复：数据只存在当前浏览器，换浏览器或换电脑时靠文件带走。
+       导入采用合并——已有条目保留，正文重复的跳过；不覆盖、不清空。
+       文件里不包含 AI 配置和 API Key。 -->
+  <div class="dialog" id="backup-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="backup-dialog__title">
+    <div class="dialog__backdrop" data-backup-close aria-hidden="true"></div>
+    <div class="dialog__card dialog__card--wide" role="document">
+      <h2 class="dialog__title" id="backup-dialog__title">备份与恢复</h2>
+      <p class="dialog__body dialog__body--sm">数据只存在当前浏览器。导出成文件后，换浏览器或换电脑再导入，就能接着用。备份包含群聊原文和全部待办；<strong>不包含</strong> AI 配置和 API Key。导入采用合并：已有条目保留，正文重复的跳过。双击本地文件打开时，浏览器可能拦截下载，可以改用「复制备份」。</p>
+      <p class="backup__summary" id="backup-summary"></p>
+      <p class="ai-why" id="backup-status" role="status" aria-live="polite"></p>
+      <input type="file" id="backup-file" accept=".json,application/json" hidden>
+      <div class="dialog__actions dialog__actions--split backup__actions">
+        <span class="backup__group">
+          <button type="button" class="btn btn--ghost btn--sm" id="backup-import">导入备份</button>
+          <button type="button" class="btn btn--ghost btn--sm" id="backup-copy">复制备份</button>
+        </span>
+        <span class="dialog__spacer"></span>
+        <button type="button" class="btn btn--ghost" id="backup-close">关闭</button>
+        <button type="button" class="btn btn--primary" id="backup-export">导出备份</button>
+      </div>
+      <label class="field backup__copyfield" id="backup-copyfield" hidden>
+        <span class="field__label">手动复制（Ctrl / Cmd + C）</span>
+        <textarea id="backup-copytext" rows="4" readonly spellcheck="false"></textarea>
+      </label>
+    </div>
   </div>
 
   <!-- 删除确认弹窗：警告 + 跳出动效 -->
