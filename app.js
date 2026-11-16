@@ -3048,8 +3048,9 @@
     const page = document.querySelector('.page');
     const topbar = document.querySelector('.topbar');
 
-    // 掀开时可以交互，但滚动条留到 finish 再恢复：
-    // 滚动条一出现，视口宽度会变，开屏内容会横向抖一下。
+    // 掀开时可以交互，但滚动锁留到 finish 再解：
+    // 纸面还没走完就放开滚动，滚轮会跑到后面刚露出的页面上。
+    // 滚动条本身不抖了：锁定时 CSS 已用 --sbw 补好右内边距。
     function unlockInteraction() {
       if (page) page.inert = false;
       if (topbar) topbar.inert = false;
@@ -3062,7 +3063,11 @@
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     // ?intro=1 是显式预览：跳过所有自动跳过条件，也不写「已看过」。
-    const force = new URLSearchParams(location.search).get('intro') === '1';
+    // 本地 file:// 双击打开时默认按显式预览处理（与 index.html 头部的判断一致）；
+    // 线上仍按「每天首次」，本地想跳过时加 ?intro=0。
+    const introParam = new URLSearchParams(location.search).get('intro');
+    const force = introParam === '1'
+      || (location.protocol === 'file:' && introParam !== '0');
     if (!force && (reduce || root.classList.contains('intro-skip'))) {
       introEl.remove();
       unlockPage();
@@ -3132,4 +3137,29 @@
   renderAll();
   setActiveTab();
   updateAIUI();
+
+  // 开屏锁滚动时 html 是 overflow:hidden，滚动条被藏起来，可用宽度比平时
+  // 多出一条滚动条；解锁瞬间整页会向左跳/被压窄。这里量出真实滚动条宽度
+  // 写进 --sbw，CSS 在锁定期间用右内边距占住同一块空间，解锁后滚动条
+  // 占回原位，页面纹丝不动。
+  // 放在 renderAll 之后：渲染前列表是空的，页面可能还没到需要滚动的高度，
+  // 量出来会漏掉「本来有没有滚动条」，补错反而会反向抖。
+  // 此刻页面自己的滚动条正被藏起来，直接量 innerWidth - clientWidth 恒为 0，
+  // 所以先临时解锁，用 rect 宽度量一次真实差值。
+  (function reserveScrollbarGutter() {
+    const root = document.documentElement;
+    if (!root.classList.contains('intro-lock')) return;
+    // 同一次脚本执行里先解锁量宽度、再锁回去，浏览器不会在中间绘制，
+    // 看不出闪动；这样量到的是页面自己那条滚动条的真实宽度。
+    // 用 getBoundingClientRect 而不是 clientWidth：在 125% 缩放下滚动条
+    // 是 15.2px，clientWidth 会取整成 15，留下 0.2px 的残余抖动。
+    root.classList.remove('intro-lock');
+    const unlockedW = root.getBoundingClientRect().width;
+    root.classList.add('intro-lock');
+    const barW = root.getBoundingClientRect().width - unlockedW;
+    // 页面本来不需要竖向滚动时差值为 0，不补。
+    if (barW > 0) {
+      root.style.setProperty('--sbw', barW.toFixed(3) + 'px');
+    }
+  })();
 })();

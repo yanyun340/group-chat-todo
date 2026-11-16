@@ -18,15 +18,18 @@
     // 日期按本地时区取，存成 YYYY-MM-DD；跨天后再打开会重新播。
     // ?intro=1 显式预览：无视「今天已播过」和系统减弱动效，完整播一遍且不写当天日期；
     // ?intro=0 临时关闭。调试和验收都用得着，不用去清 localStorage。
+    // 本地双击打开（file://）时默认就按显式预览处理：演示现场不用先记住加参数。
+    // 上线版本（https）仍按「每天首次」；本地想跳过时加 ?intro=0。
     try {
       var introParam = new URLSearchParams(location.search).get('intro');
+      var introFileDefault = location.protocol === 'file:' && introParam !== '0';
       var introNow = new Date();
       var introToday = introNow.getFullYear() + '-'
         + String(introNow.getMonth() + 1).padStart(2, '0') + '-'
         + String(introNow.getDate()).padStart(2, '0');
       var introSeenToday = localStorage.getItem('group-chat-todo:intro-day') === introToday;
       var introReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (introParam === '1') {
+      if (introParam === '1' || introFileDefault) {
         document.documentElement.classList.add('intro-lock', 'intro-force');
       } else if (introParam === '0' || introSeenToday || introReduce) {
         document.documentElement.classList.add('intro-skip');
