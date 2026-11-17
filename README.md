@@ -121,7 +121,7 @@ localStorage.clear()
 
 ### 想继续往下看
 
-- **AI 是怎么被一步步约束成这个样子的**：看 [`docs/prompt-log/`](docs/prompt-log/)，3 条完整 Prompt 链，含两次真实缺陷追溯
+- **AI 是怎么被一步步约束成这个样子的**：看 [`docs/prompt-log/`](docs/prompt-log/)，3 条完整 Prompt 链，覆盖一次界面重设计、一次删除动效追查与一次 WebGL 渲染修复
 - **为什么某些地方故意"不智能"**：看 [`README.md` 的「已知问题 / 边界」](#已知问题--边界)
 - **需求边界**：看 [`PRD.md`](PRD.md)
 
