@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>话里有事 · 作品介绍文档</title>
+<style>
+  @page { size: A4; }
+
+  :root{
+    --ink:#111111;
+    --ink-2:#3a3a3a;
+    --ink-3:#6b6b6b;
+    --rule:#c9c4b6;
+    --paper:#ffffff;
+    --tint:#f6f3ea;
+    --indigo:#1B3A6B;
+    --mustard:#C8901C;
+    --rust:#A8452A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{ margin:0; padding:0; }
+
+  body{
+    font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;
+    font-size:10.15pt;
+    line-height:1.64;
+    color:var(--ink);
+    background:var(--paper);
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  p{ margin:0 0 6px; text-align:justify; }
+  strong{ font-weight:700; }
+  em{ font-style:normal; background:linear-gradient(transparent 62%, #f3dfa8 62%); }
+
+  .page{
+    page-break-after:always;
+    break-after:page;
+    padding-bottom:2px;
+  }
+  .page:last-child{ page-break-after:auto; break-after:auto; }
+  .chapter{ margin-top:14px; }
+  .chapter:first-of-type{ margin-top:0; }
+  .sechead{ break-inside:avoid; break-after:avoid; }
+  .chapter h3{ break-after:avoid; page-break-after:avoid; }
+  .chapter h4{ break-after:avoid; }
+
+  /* ---------- 页眉 ---------- */
+  .runhead{
+    break-after:avoid; page-break-after:avoid;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:4px; margin-bottom:10px;
+    font-size:7.6pt; letter-spacing:.08em; color:var(--ink-3);
+  }
+  .runhead b{ color:var(--ink); font-weight:700; letter-spacing:.14em; }
+
+  /* ---------- 章节头 ---------- */
+  .sechead{ display:flex; gap:12px; align-items:flex-start; margin:0 0 10px; }
+  .secnum{
+    font-family:"Times New Roman",serif;
+    font-size:44pt; line-height:.82; font-weight:700;
+    color:transparent; -webkit-text-stroke:2px var(--indigo);
+    letter-spacing:-.02em; padding-top:2px; min-width:62px;
+  }
+  .sectitle{ flex:1; border-left:2px solid var(--ink); padding-left:10px; }
+  .sectitle h2{
+    font-family:"Noto Serif SC","SimSun",serif;
+    font-size:18pt; line-height:1.18; margin:0 0 2px; letter-spacing:.01em;
+  }
+  .sectitle .dek{ font-size:8.4pt; color:var(--ink-3); letter-spacing:.02em; }
+
+  h3{
+    font-size:10.9pt; margin:13px 0 5px; padding-left:8px;
+    border-left:4px solid var(--mustard); line-height:1.35;
+  }
+  h3:first-of-type{ margin-top:4px; }
+  h4{ font-size:9.9pt; margin:8px 0 3px; color:var(--indigo); }
+
+  ul,ol{ margin:0 0 8px; padding-left:1.35em; }
+  li{ margin-bottom:3px; text-align:justify; }
+  li::marker{ color:var(--indigo); }
+
+  /* ---------- 表格 ---------- */
+  table{
+    width:100%; border-collapse:collapse; margin:6px 0 8px;
+    font-size:8.35pt; line-height:1.45;
+  }
+  thead{ display:table-header-group; }
+  tr{ break-inside:avoid; }
+  caption{
+    caption-side:top; text-align:left; font-size:7.5pt;
+    color:var(--ink-3); padding-bottom:2px; letter-spacing:.03em;
+  }
+  th{
+    background:var(--indigo); color:#fff; font-weight:700;
+    text-align:left; padding:3.5px 6px; border:1px solid var(--indigo);
+    letter-spacing:.04em;
+  }
+  td{ padding:3.6px 6px; border:1px solid var(--rule); vertical-align:top; }
+  tbody tr:nth-child(even) td{ background:#faf8f2; }
+  td.num{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .t-ok{ color:#1d6b3f; font-weight:700; white-space:nowrap; }
+  .t-no{ color:var(--rust); font-weight:700; white-space:nowrap; }
+
+  /* ---------- 代码 ---------- */
+  pre{
+    background:var(--tint); border-left:3px solid var(--mustard);
+    padding:6px 9px; margin:5px 0 8px; font-size:7.7pt; line-height:1.5;
+    font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+    white-space:pre-wrap; break-inside:avoid;
+  }
+  code{ font-family:"Cascadia Mono",Consolas,"Courier New",monospace; font-size:8.4pt; background:#f2eee1; padding:0 2px; }
+
+  /* ---------- 引用 / 提示块 ---------- */
+  .quote{
+    border:2px solid var(--ink); border-left-width:7px; border-left-color:var(--mustard);
+    padding:6px 10px; margin:6px 0 8px; background:#fdfbf4;
+    font-size:9.1pt; line-height:1.55; break-inside:avoid;
+  }
+  .quote .who{ display:block; font-size:7.2pt; color:var(--ink-3); letter-spacing:.06em; margin-bottom:2px; }
+  .quote p:last-child{ margin-bottom:0; }
+
+  .note{
+    border:1px dashed var(--ink-3); padding:5px 9px; margin:6px 0 8px;
+    font-size:8.5pt; line-height:1.55; background:#fff;
+  }
+  .note b{ color:var(--rust); }
+
+  /* ---------- 图 ---------- */
+  figure{ margin:6px 0 9px; break-inside:avoid; }
+  figure img{
+    width:100%; height:auto; display:block;
+    border:2px solid var(--ink); max-height:112mm; object-fit:contain; background:#fff;
+  }
+  .figs{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; align-items:start; }
+  .figs figure{ margin:0 0 6px; display:flex; flex-direction:column; }
+  .figs figure img{ width:100%; height:62mm; object-fit:contain; }
+  .figs figure figcaption{ flex:1; }
+  figcaption{ font-size:7.4pt; color:var(--ink-3); margin-top:3px; letter-spacing:.02em; line-height:1.45; }
+  figcaption b{ color:var(--ink); }
+
+  /* ---------- 卡片 ---------- */
+  .grid{ display:grid; gap:8px; margin:8px 0 10px; }
+  .g2{ grid-template-columns:1fr 1fr; }
+  .g3{ grid-template-columns:1fr 1fr 1fr; }
+  .g4{ grid-template-columns:repeat(4,1fr); }
+  .card{
+    border:2px solid var(--ink); padding:7px 9px; background:#fff; break-inside:avoid;
+  }
+  .card .k{ font-size:7.6pt; letter-spacing:.1em; color:var(--ink-3); display:block; }
+  .card .v{ font-size:15pt; font-weight:700; line-height:1.2; font-family:"Times New Roman",serif; }
+  .card .v small{ font-size:8.5pt; font-family:"Microsoft YaHei",sans-serif; font-weight:400; color:var(--ink-3); }
+  .card p{ font-size:8.6pt; margin:2px 0 0; color:var(--ink-2); line-height:1.5; }
+
+  .hl{
+    border-top:2px solid var(--ink); padding:5px 0 4px;
+    display:grid; grid-template-columns:42px 1fr; gap:9px; break-inside:avoid;
+  }
+  .hl .n{
+    font-family:"Times New Roman",serif; font-size:18pt; font-weight:700;
+    color:var(--indigo); line-height:.9; text-align:right;
+  }
+  .hl .b p{ margin:0 0 3px; font-size:9.2pt; line-height:1.55; }
+  .hl .b .h{ font-weight:700; font-size:9.6pt; }
+  .hl .b .why{ color:var(--ink-2); }
+  .hl .b .chk{ color:var(--indigo); font-size:8.8pt; }
+  .hl .b .chk::before{ content:"验证 · "; color:var(--mustard); font-weight:700; }
+
+  /* ---------- 封面 ---------- */
+  .cover{ display:flex; flex-direction:column; min-height:246mm; }
+  .cover .kicker{ font-size:8.6pt; letter-spacing:.28em; color:var(--indigo); border-bottom:2px solid var(--ink); padding-bottom:7px; }
+  .cover h1{
+    font-family:"Noto Serif SC","SimSun",serif;
+    font-size:66pt; line-height:1.05; margin:26px 0 4px; letter-spacing:.02em;
+  }
+  .cover .sub{
+    font-family:"Noto Serif SC","SimSun",serif;
+    font-size:20pt; color:var(--indigo); margin:0 0 18px; letter-spacing:.1em;
+  }
+  .cover .lead{ font-size:11.5pt; line-height:1.85; max-width:150mm; color:var(--ink-2); }
+  .cover .bar{ height:10px; background:var(--mustard); border:2px solid var(--ink); margin:20px 0 14px; }
+  .cover .meta{ display:grid; grid-template-columns:repeat(4,1fr); gap:0; border-top:2px solid var(--ink); }
+  .cover .meta div{ padding:6px 8px 6px 0; border-right:1px solid var(--rule); }
+  .cover .meta div:last-child{ border-right:0; }
+  .cover .meta .k{ font-size:7.4pt; letter-spacing:.1em; color:var(--ink-3); display:block; }
+  .cover .meta .v{ font-size:10pt; font-weight:700; }
+  .cover .links{ margin-top:14px; font-size:9pt; line-height:1.9; padding-left:0; list-style:none; }
+  .cover .links li{ color:var(--ink-2); }
+  .cover .links b{ color:var(--ink); display:inline-block; width:64px; }
+  .cover .foot{ margin-top:auto; border-top:1px solid var(--rule); padding-top:6px; font-size:7.8pt; color:var(--ink-3); display:flex; justify-content:space-between; }
+
+  .toc{ font-size:9.4pt; }
+  .toc div{ display:flex; gap:8px; padding:3.4px 0; border-bottom:1px dotted var(--rule); }
+  .toc .n{ color:var(--mustard); font-weight:700; width:18px; }
+  .toc .t{ flex:1; }
+  .toc .d{ color:var(--ink-3); font-size:8.4pt; }
+
+  .nowrap{ white-space:nowrap; }
+  .tight li{ margin-bottom:1.5px; }
+</style>
+</head>
+<body>
+
+<!-- ================= 封面 ================= -->
+<section class="page cover">
+  <div class="kicker">第九届传智杯「AI 创新应用挑战赛」 · 省赛作品 · 作品介绍文档</div>
+
+  <h1>话里有事</h1>
+  <p class="sub">群聊待办提取器</p>
+  <p class="lead">把一段群聊记录贴进去，自动抽出里面「要做的事」和截止时间，并且说清每一条「为什么算待办」。纯前端单页，双击 <code>index.html</code> 即开；默认只用本地规则离线运行，AI 是可选增强。</p>
+
+  <div class="bar"></div>
+
+  <div class="quote" style="margin-top:18px;border-left-width:7px">
+    <span class="who">本作品的主张</span>
+    <p>待办提取的第一要求不是「智能」，而是<strong>可信</strong>：每一条都要说得出它命中了原文里的哪几个字；说不清的，宁可放进「待确认」，或者干脆不要。</p>
+  </div>
+
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card"><span class="k">默认路径</span><span class="v" style="font-size:11pt">本地规则<small> · 离线</small></span><p>零网络、零密钥，逐条可追溯</p></div>
+    <div class="card"><span class="k">可选增强</span><span class="v" style="font-size:11pt">AI 提取<small> · 自带 Key</small></span><p>证据对不上就丢弃，失败自动回退</p></div>
+    <div class="card"><span class="k">协作方式</span><span class="v" style="font-size:11pt">判断权在我<small> · 实现权在 AI</small></span><p>三条 Prompt 链完整留痕</p></div>
+  </div>
+
+  <div class="meta">
+    <div><span class="k">作品形态</span><span class="v">纯 HTML/CSS/JS 单页</span></div>
+    <div><span class="k">代码规模</span><span class="v">6163 行 · 零依赖</span></div>
+    <div><span class="k">演示视频</span><span class="v">07:42 · 1920×1080</span></div>
+    <div><span class="k">提交日期</span><span class="v">2026-11-18</span></div>
+  </div>
+
+  <ul class="links">
+    <li><b>作者</b>黄树睿 · 大数据二班</li>
+    <li><b>作品仓库</b>github.com/yanyun340/group-chat-todo（Public，41 次提交）</li>
+    <li><b>在线体验</b>yanyun340.github.io/group-chat-todo/</li>
+    <li><b>演示视频</b>7 分 42 秒 / MP4 / 1920×1080 / 含 3 分 09 秒 AI 协同过程复现（公开平台链接见提交表单第 7 项）</li>
+    <li><b>开源许可</b>源码随仓库公开，供评审复现</li>
+  </ul>
+
+  <div class="foot">
+    <span>本文档共 19 页，正文不引用任何未实现的功能</span>
+    <span>合成数据 · 不含真实姓名、手机号、学号</span>
+  </div>
+</section>
+
+<!-- ================= 一页速览 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>一页速览</span></div>
+
+  <div class="sectitle" style="border-left:0;padding-left:0;margin-bottom:12px">
+    <h2 style="font-size:18pt">一页速览</h2>
+    <div class="dek">这一页写给时间紧的评审：作品是什么、做了什么判断、本文在哪一章回答你</div>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:12px">
+    <div class="card"><span class="k">GIT 提交</span><span class="v">41</span><p>2026-10-15 → 11-17，逐功能落地</p></div>
+    <div class="card"><span class="k">手写代码</span><span class="v">6163<small> 行</small></span><p>0 框架 · 0 依赖 · 0 构建步骤</p></div>
+    <div class="card"><span class="k">样本提取</span><span class="v">8<small> 条</small></span><p>5 待办 / 3 待确认，1 条重复已合并</p></div>
+    <div class="card"><span class="k">AI 协作</span><span class="v">93<small> 轮</small></span><p>取 3 条完整 Prompt 链做快照</p></div>
+  </div>
+
+  <p>这不是一个「把群聊丢给大模型」的作品。它的核心主张是：<strong>待办提取的第一要求不是智能，而是可信</strong>。所以默认路径是一条可以在浏览器里逐条追溯的本地规则链——每一条待办都必须说得出它命中了原文里的哪几个字；AI 是可选增强，它给出的每一条也必须带逐字出现在原文里的证据，对不上就整条丢弃。整套行为由一个 36 行的 <code>AGENTS.md</code> 约束，开发过程按 Prompt 链归档，任意历史版本可 <code>git worktree</code> 还原。</p>
+
+  <h3>评审五维度 → 本文对应章节</h3>
+  <table>
+    <caption>按赛道公布的评审标准，把本文档的章节直接映射过去</caption>
+    <thead><tr><th style="width:26%">评审维度</th><th style="width:9%">权重</th><th>本文对应位置</th></tr></thead>
+    <tbody>
+      <tr><td>过程可复现性与演进链路</td><td class="num">25%</td><td>第五章（代码如何分层便于审查）、第八章（10 分钟复现 + 提交历史 + 任意版本回放）</td></tr>
+      <tr><td>解题有效性与实用价值</td><td class="num">25%</td><td>第一章（痛点与范围）、第三章（亮点）、第九章（界面实拍）</td></tr>
+      <tr><td>方法创新性与意图控制</td><td class="num">20%</td><td>第六章（判断权在人 / 实现权在 AI，含三条 Prompt 链原文摘录）</td></tr>
+      <tr><td>工程质量与架构设计</td><td class="num">15%</td><td>第五章（关键技术）、第七章（分层与约束执行）</td></tr>
+      <tr><td>用户体验与产品精细度</td><td class="num">15%</td><td>第二章（十步操作）、第三章（可解释与动效取舍）、第九章</td></tr>
+    </tbody>
+  </table>
+
+  <h3>目录</h3>
+  <div class="toc">
+    <div><span class="n">1</span><span class="t">项目详情：谁在用、解决什么问题、边界在哪</span></div>
+    <div><span class="n">2</span><span class="t">使用方式：三种打开方式与十步操作</span></div>
+    <div><span class="n">3</span><span class="t">项目亮点：八条，每条都写清为什么与怎么验</span></div>
+    <div><span class="n">4</span><span class="t">AI 测试技术落地：验证矩阵与失败路径</span></div>
+    <div><span class="n">5</span><span class="t">关键技术：规则、时间解析、可解释性、AI 通道</span></div>
+    <div><span class="n">6</span><span class="t">意图控制策略：判断权在人，实现权在 AI</span></div>
+    <div><span class="n">7</span><span class="t">架构设计与对 AI 的约束</span></div>
+    <div><span class="n">8</span><span class="t">可复现性论证：10 分钟跑完、任意版本可回放</span></div>
+    <div><span class="n">9</span><span class="t">界面实拍</span></div>
+    <div><span class="n">10</span><span class="t">发表与获奖情况、是否基于其他项目优化、附录</span></div>
+  </div>
+
+  <div class="note" style="margin-top:12px">
+    <b>阅读提示</b>：本文所有数字都可在仓库里对上——行数用 <code>wc -l</code>、提交用 <code>git log</code>、验收结果用 <code>submission/smoke_test.py</code> 复跑。凡是没做到或存在边界的，都写在第八章「可复现性边界」与第三章末尾，不藏在脚注里。
+  </div>
+</section>
+
+<!-- ================= 第一章 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>01 / 项目详情</span></div>
+
+  <div class="sechead">
+    <div class="secnum">01</div>
+    <div class="sectitle">
+      <h2>项目详情</h2>
+      <div class="dek">谁在用 · 解决什么问题 · 一句话闭环 · 边界在哪</div>
+    </div>
+  </div>
+
+  <h3>谁在用，什么时候用</h3>
+  <p>经常泡在班级群、课程群、社团群里的大学生。一个 60 人的班级群，一天轻松滚出两三百条消息：通知、接龙、闲聊、取消通知、重复催办全混在一起。真正跟自己有关的往往只有三五行，但它们散落在几十屏聊天记录中间。</p>
+  <p>这个页面的使用时机很具体：<strong>刚刷完群、还没开始做事的那 30 秒</strong>。把最近一段记录整段复制贴进来，点一次「提取待办」，得到一张「我该做什么、什么时候前做完」的清单，然后关掉页面去干活。</p>
+
+  <h3>三个具体痛点，不是「效率低」这种空话</h3>
+  <ul>
+    <li><strong>漏。</strong>「明天下午 5 点前交高数作业」夹在两条闲聊之间，往下刷三屏就沉了；过了截止才发现。</li>
+    <li><strong>看不懂为什么。</strong>用现成的待办工具手抄，抄的时候随手删了半句，第二天自己都不确定「周五之前」指的是报名还是交材料。</li>
+    <li><strong>不敢信自动工具。</strong>把整段聊天丢给通用 AI，它会给出一份读起来很顺的清单——但其中几条是它自己补的、几条把闲聊当成了交代，且无法指出原文哪一句对应哪一条。对「交作业」这种事，一条编出来的待办比没有待办更危险。</li>
+  </ul>
+
+  <h3>一句话闭环</h3>
+  <div class="quote">
+    <span class="who">产品闭环</span>
+    <p>粘贴群聊 → 提取待办（默认本地规则）→ <strong>每条都能点开看依据</strong> → 标记完成 / 确认待确认项 → 在日历里看「哪几天扎堆」→ 刷新后还在。</p>
+    <p>这条链上每一步都可以被用户单独验证：提取结果能回溯到原文，依据引用的是原文里真实存在的字，日期落在日历的具体某一天，数据存在本浏览器内。</p>
+  </div>
+
+  <h3>范围：做什么，以及明确不做什么</h3>
+  <table>
+    <caption>第一版范围与边界（与 PRD.md 一致）</caption>
+    <thead><tr><th style="width:50%">做</th><th>暂不做（写在 PRD 里的边界）</th></tr></thead>
+    <tbody>
+      <tr><td>粘贴群聊文本，按行解析「昵称 时间 内容」</td><td>不自动连接微信 / QQ 抓取消息，只支持粘贴</td></tr>
+      <tr><td>本地规则提取待办与截止时间，逐条给出依据</td><td>不做登录、多群管理、云端同步</td></tr>
+      <tr><td>「待办 / 待确认 / 已完成」三档分级与筛选</td><td>不做推送提醒、日历导出 / 日历同步</td></tr>
+      <tr><td>可选 AI 提取：自带 Key，失败自动回退本地规则</td><td>不做后端与数据库；不内置任何 AI 密钥或代理</td></tr>
+      <tr><td>日历视图、手动排期、主题切换、备份 / 恢复</td><td>不引入框架与构建步骤，保持双击即开</td></tr>
+    </tbody>
+  </table>
+
+
+  
+
+  <h3>三个决定了整个架构的判断</h3>
+
+  <h4>判断一：默认路径不用大模型</h4>
+  <p>大模型读一段群聊、吐一份清单，是今天最容易实现的做法，也是这个作品最不该默认走的路。原因有三条，都是工程判断而非偏好：</p>
+  <ul>
+    <li><strong>不可复现。</strong>同一段输入，模型两次输出可能不同；评委按 README 复跑，看到的清单可能和文档里的截图不一样。赛道把「过程可复现性」放在 25% 权重，这一条就足以否掉默认走模型的方案。</li>
+    <li><strong>有隐私成本。</strong>班级群里是同学的真实发言。默认联网意味着默认上传。这个作品面向的是「随手贴一段刚刷完的群聊」这种高频、低戒备的场景，默认上传不合适。</li>
+    <li><strong>答案要能被质疑。</strong>规则链的每个判断都能指向一行代码（「命中『别忘』这个祈使词」）；模型的判断只能指向一段自然语言解释。前者可以被用户反驳并修正，后者不能。</li>
+  </ul>
+  <p>所以默认路径是一条<strong>可读、可改、可复现</strong>的规则链；AI 被设计成一个可插拔的增强通道，由用户自己开、自己关、自己填 Key。</p>
+
+  <h4>判断二：「说清为什么」是主线功能，不是附加说明</h4>
+  <p>多数提取工具把「为什么」做成一个tooltip 或日志。这里把它做成了一等公民：点开任意一条，右侧输入台原地切换成解析面板，列出<strong>命中的时间、命中的关键词、来源行</strong>，并在原文里高亮对应片段；底部还有「打开原文 · 第 N 行」，点开能看到这条待办是从<strong>你粘贴的那一整行</strong>里抠出来的——一行被切成两条时，能看见「这句话里还有另一半」。</p>
+  <p>这条设计带来一个直接的架构约束：<strong>提取结果必须携带证据片段，而不能只返回结论</strong>。这个约束后来也顺延到了 AI 通道——AI 返回的每一条必须附上逐字出现在原文里的证据，对不上就整条丢弃（见 5.6）。</p>
+
+  <h4>判断三：拿不准的不要假装确定</h4>
+  <p>「周末可能要去实验室，到时候再说」这句话里，时间和意图都是含糊的。有些工具会把它判成待办，用户清单里就多了一条自己都没打算做的事；另一些会直接丢掉，用户就可能漏事。这个作品选了第三条路：<strong>放进「待确认」，并说明为什么拿不准</strong>，由用户点一下转正。</p>
+  <p>「待确认」不是一个垃圾桶，它带完整的依据：措辞含糊会指出命中了哪个含糊词，只有时间没有动作会说明缺什么。用户点「确认为待办」后，依据里会留下「由你手动确认为待办」，刷新后保持——<em>谁做的判断，记录里就写着谁</em>。</p>
+
+  <h3>边界的取舍：为什么不做微信自动抓取</h3>
+  <p>技术上并非不可能，但这个作品明确不做。原因很实际：自动抓取需要账号授权、需要长期运行、需要在用户不知道的时候读取全部聊天记录，而它带来的收益只是省掉一次复制粘贴。<strong>一个用来处理同学真实发言的工具，不应该为此获得读取全部消息的权限。</strong>这条边界与「默认不联网」是同一条判断的两个面。</p>
+  <p>同样的取舍出现在备份上：备份是手动导出的 JSON 文件，不是账号同步。它意味着换设备时要自己把文件带过去——换来的是「数据从来没离开过这台机器」，以及「不需要为这个工具注册任何账号」。</p>
+</section>
+
+<!-- ================= 第二章 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>02 / 使用方式</span></div>
+
+  <div class="sechead">
+    <div class="secnum">02</div>
+    <div class="sectitle">
+      <h2>使用方式</h2>
+      <div class="dek">三种打开方式 · 十步操作 · 输入格式 · 数据存在哪</div>
+    </div>
+  </div>
+
+  <h3>三种打开方式</h3>
+  <table>
+    <thead><tr><th style="width:18%">方式</th><th style="width:42%">怎么做</th><th>适用场景</th></tr></thead>
+    <tbody>
+      <tr><td>在线体验</td><td>直接打开 <code>yanyun340.github.io/group-chat-todo/</code></td><td>评审快速看效果，不需要装任何东西；功能与本地版完全一致，数据仍只存在你自己的浏览器</td></tr>
+      <tr><td>本地打开</td><td><code>git clone</code> 后双击 <code>index.html</code>（地址栏是 <code>file://</code> 属正常）</td><td>现场演示；不需要 Node、不需要装依赖、不需要联网</td></tr>
+      <tr><td>指定版本打开</td><td><code>git worktree add ../v1 &lt;commit&gt;</code> 后打开该目录的 <code>index.html</code></td><td>回看任意历史版本的行为差异（见 8.3）</td></tr>
+    </tbody>
+  </table>
+  <p>本地 <code>file://</code> 打开时，开屏动画每次都会播一遍——这是刻意的，方便现场演示不用先清缓存；想跳过就在地址后加 <code>?intro=0</code>。线上版按「每天首次」播放。</p>
+
+  <h3>十步操作（从粘贴到归档）</h3>
+  <ol class="tight">
+    <li><strong>粘贴。</strong>把群聊记录贴进右侧输入台，每行一条，格式 <code>昵称 时间 内容</code>；也可以点「填入示例」直接看演示。</li>
+    <li><strong>提取。</strong>点「提取待办」。结果按「待办 / 待确认 / 已完成」三组显示在左侧，顶部统计块给出待办数、与你相关数、待确认数。</li>
+    <li><strong>看依据。</strong>点任意一条，右侧原地切成解析面板：命中的时间、命中的关键词、来源行，并在原文里高亮；点「返回输入台」或再点一次该条即切回。</li>
+    <li><strong>看整行。</strong>解析面板底部「打开原文 · 第 N 行」展开后显示你粘贴的原始那一行，并把这条对应的片段标黄。</li>
+    <li><strong>确认。</strong>「待确认」里的条目点「确认为待办」一键转正，依据里留下手动确认的记录。</li>
+    <li><strong>完成。</strong>勾选即完成；「全部完成」把当前标签下所有未完成条目一次结清。</li>
+    <li><strong>排序与删除。</strong>按住左侧点阵把手拖动排序；拖到列表外、放进左下角垃圾桶即删除，底部出现 6 秒「撤销」，连删会累加。</li>
+    <li><strong>多选。</strong>右上角「多选」进入批量模式：整行点选、Shift 连选，批量条支持全选 / 标记完成 / 删除 / 取消。</li>
+    <li><strong>日历。</strong>右上角「▦ 日历」切视图：有日期的条目落进月历，过期未完成标红；认不出日期的进「未排期」，可在详情里手动排期或清除。</li>
+    <li><strong>带走。</strong>顶栏「⇅ 备份」导出 JSON（群聊原文 + 全部待办），换浏览器后导入即可接着用；导入是合并，重复正文跳过。</li>
+  </ol>
+
+  <h3>输入格式与合成数据</h3>
+  <p>输入按行解析，行首的「注：」「截止时间：」「地点：」这类<strong>标签不会被当成昵称</strong>；一行里写了不止一件事（句号断开，或「并且…」「然后…」另起一件），会拆成几条<strong>分别</strong>判断——拆出来的每一段都得自己站得住才留下。</p>
+  <p>仓库里的 <code>sample-chat.txt</code> 是 14 行合成群聊，昵称全是「班长 / 同学甲 / 学习委员 / 辅导员」这类虚构身份，不含任何真实姓名、手机号或学号。它刻意埋了五类情况：正常交代、面向全体的通知、重复催办、含糊措辞、取消通知。</p>
+
+
+  
+
+  <h3>样本逐行对照：14 行输入 → 8 条结果</h3>
+  <table>
+    <caption>输入为 <code>sample-chat.txt</code> 全文；「结果」列为本机实测（2026-11-17，Chrome 157，见 4.2）</caption>
+    <thead><tr><th style="width:8%">行</th><th style="width:44%">原文</th><th style="width:22%">判定</th><th>依据（为什么）</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1–2</td><td>大家早上好，降温注意保暖 / 收到</td><td>不产生待办</td><td>无动作词、无时间</td></tr>
+      <tr><td class="num">3</td><td>明天下午5点前交高数作业，别忘</td><td class="t-ok">待办</td><td>时间「明天下午5点」+ 祈使词「别忘」</td></tr>
+      <tr><td class="num">4</td><td>好的</td><td>不产生待办</td><td>纯应答</td></tr>
+      <tr><td class="num">5</td><td>周五之前报名运动会，@全体成员</td><td class="t-ok">待办</td><td>时间「周五之前」+ 动作「报名」+ 面向全班</td></tr>
+      <tr><td class="num">6</td><td>我要报名100米</td><td>不产生待办</td><td>第一人称自述，不是交代给别人</td></tr>
+      <tr><td class="num">7</td><td>记得把实验报告提交到系统</td><td class="t-ok">待办</td><td>祈使「记得」+ 动作「提交」；无日期 → 日历进「未排期」</td></tr>
+      <tr><td class="num">8</td><td>中午一起吃饭吗</td><td>不产生待办</td><td>疑问句，不是交代</td></tr>
+      <tr><td class="num">9</td><td>明天下午5点前交高数作业，别忘</td><td>合并</td><td>与第 3 行正文重复，合并为同一条</td></tr>
+      <tr><td class="num">10</td><td>周末可能要去实验室，到时候再说</td><td>待确认</td><td>含糊词「可能」「到时候」</td></tr>
+      <tr><td class="num">11</td><td>@我 下课后交一下作业本</td><td class="t-ok">待办</td><td>@我 + 动作「交」；「下课后」保留原文说法，不猜日期</td></tr>
+      <tr><td class="num">12</td><td>我班学生须在10.21心理普查，请大家按照通知要求完成</td><td class="t-ok">待办</td><td>日期「10.21」+ 「须」「完成」+ 面向全班</td></tr>
+      <tr><td class="num">13</td><td>今晚的选修课取消了</td><td>不产生待办</td><td>取消通知：命中动作词但被否定语境拦下</td></tr>
+      <tr><td class="num">14</td><td>谁有上学期的高数笔记</td><td>待确认</td><td>请求词「谁有」，归「请求」类型</td></tr>
+    </tbody>
+  </table>
+  <p>实测结果：<strong>待办 5 条、待确认 3 条，共 8 条</strong>；第 9 行因正文重复被合并，并在顶部提示「合并 1 条」；第 3 行点开后依据为「时间『明天下午5点』」+「关键词『别忘』」，点「打开原文 · 第 3 行」可看到 <code>班长 09:15 明天下午5点前交高数作业，别忘</code>。</p>
+
+  <h3>数据存在哪</h3>
+  <table>
+    <thead><tr><th style="width:24%">数据</th><th style="width:32%">位置</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>待办条目、群聊原文、主题、AI 配置</td><td>本浏览器 <code>localStorage</code>，键 <code>group-chat-todo:v1</code></td><td>刷新不丢；换浏览器 / 无痕模式会回到初始状态</td></tr>
+      <tr><td>AI 的 API Key</td><td>同一 <code>localStorage</code>，不写入代码、仓库、导出文件</td><td>可用 <code>git grep -n "sk-"</code> 自检仓库内无密钥</td></tr>
+      <tr><td>备份文件</td><td>用户手动导出的 JSON</td><td>只含群聊原文与待办，不含主题与 AI 配置</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <b>复位方法</b>：浏览器控制台执行 <code>localStorage.clear()</code> 后刷新，即可回到全新状态——本地演示前用这一句，不必清缓存、不必换无痕窗口。
+  </div>
+</section>
+
+<!-- ================= 第三章 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>03 / 项目亮点</span></div>
+
+  <div class="sechead">
+    <div class="secnum">03</div>
+    <div class="sectitle">
+      <h2>项目亮点</h2>
+      <div class="dek">八条，每条都写清「怎么做的 / 为什么这么做 / 怎么验证」</div>
+    </div>
+  </div>
+
+  <div class="hl"><div class="n">01</div><div class="b">
+    <p class="h">每条待办都能追溯到原句</p>
+    <p class="why">解析面板摊开「时间 / 关键词 / 来源行」三块依据，原文里高亮命中片段，底部「打开原文 · 第 N 行」还原整行。依据一律<strong>引用实际命中的那几个字</strong>（如「面向全班『@所有人』」），不写死标签——写死的标签一旦和原文不符，整块依据就不可信了。</p>
+    <p class="chk">点开任一条，把依据里引用的字拿去原文搜，必然搜得到。</p>
+  </div></div>
+
+  <div class="hl"><div class="n">02</div><div class="b">
+    <p class="h">拿不准的进「待确认」，不假装确定</p>
+    <p class="why">措辞含糊（「可能」「到时候」）或只命中时间、没有明确动作的条目单独归组，点一下可转正，依据里留下「由你手动确认为待办」。清单里因此不会出现「它替我决定的事」，也不会悄悄丢掉「它拿不准的事」。</p>
+    <p class="chk">样本第 10、14 行进「待确认」；点「确认为待办」后刷新仍在。</p>
+  </div></div>
+
+  <div class="hl"><div class="n">03</div><div class="b">
+    <p class="h">规则先行，AI 可选，失败自动回退</p>
+    <p class="why">默认路径零网络、零密钥。配置 AI 后整段群聊交给该服务整理（一次最多发送前 12000 字）；未配置、缺 Key、请求失败都自动回退本地规则并明确提示，用户不会空手而归。</p>
+    <p class="chk">故意填错 Key，结果仍出且顶部提示已回退。</p>
+  </div></div>
+
+  <div class="hl"><div class="n">04</div><div class="b">
+    <p class="h">AI 输出必须带逐字证据，对不上整条丢弃</p>
+    <p class="why">这是把「可解释性」从本地规则顺延到 AI 通道的关键一步：AI 返回的每一条都要附一段原文片段，系统校验该片段是否<strong>逐字出现</strong>在用户粘贴的文本里，不通过就丢弃该条，而不是写进列表。改写过的「依据」会导致条目被丢弃——宁可少一条，也不给一条编的。</p>
+    <p class="chk">构造一条证据不在原文的返回，该条不出现；相同输入命中本地缓存不重复请求。</p>
+  </div></div>
+
+  <div class="hl"><div class="n">05</div><div class="b">
+    <p class="h">日期落到日历，认不出的不猜</p>
+    <p class="why">列表看「做什么」，日历看「什么时候」。相对日期（今天 / 明天 / 周五 / 三天后）以<strong>每条自己的导入时间</strong>为锚点，所以后导入的批次不会改写先前条目的日期，同一批聊天反复打开日期也不漂移。「放学前 / 下课后」这类相对事件保留原文说法，进「未排期」等手动排期——宁可让人自己排，也不猜一个错的日期。</p>
+    <p class="chk">样本落点：3 个日期格共 4 条，未排期 4 条，最挤 11/18（2 条）。</p>
+  </div></div>
+
+  <div class="hl"><div class="n">06</div><div class="b">
+    <p class="h">两次提取是追加，不是覆盖</p>
+    <p class="why">再点一次「提取待办」是往现有清单里追加：已有同一句话跳过，原有条目的完成状态、手动排期和顺序都不动。但如果原来那条在「待确认」、这次规则或 AI 已明确判成待办，会顺手转正（已完成的不动）——否则旧的误判重新提取多少遍都卡在原处。</p>
+    <p class="chk">样本 + 1 条新消息后为 9 条，第一批完成状态不变；空输入时清单原样保留。</p>
+  </div></div>
+
+
+  
+
+  <div class="hl"><div class="n">07</div><div class="b">
+    <p class="h">动效只花在该花的地方</p>
+    <p class="why">删除沿弧线甩出、剩余条目 FLIP 让位、拖进垃圾桶、主题切换从按钮位置圆形展开——这些是低频、需要被「看见」的动作。而勾选完成<strong>不加任何动效</strong>，那是高频操作，动效只会拖慢。全部动效只用 <code>transform</code> 与 <code>opacity</code>，不触发布局；系统开启「减少动态效果」时自动跳过。</p>
+    <p class="chk">DevTools 开 <code>prefers-reduced-motion: reduce</code>（不刷新）后再删一条，仍能正常播放弧线——这一点专门修过一个 bug，见第六章链 02。</p>
+  </div></div>
+
+  <div class="hl"><div class="n">08</div><div class="b">
+    <p class="h">双主题 + WebGL 背景，但它们不影响可用性</p>
+    <p class="why">纸白 / 牛皮纸两套主题，颜色全部走 CSS 语义层，牛皮纸主题只重映射语义变量；背景是原生 WebGL 着色器（主题四色在纸底上缓慢晕染 + 细纸噪点），随主题换色。选择存 <code>localStorage</code>，首屏内联脚本提前落主题，刷新不闪白。<strong>无 WebGL 时页面降级为纯色底，全部功能不受影响。</strong></p>
+    <p class="chk">切主题后刷新仍保持；禁用 WebGL 后功能照常。</p>
+  </div></div>
+
+  <h3>一个被刻意放弃的「智能」</h3>
+  <p>「与你相关」这一栏只做得出显式信号：<code>@我</code>、面向全班（「我班 / 全班 / 请大家 / 全体成员」）。它能判断「这条跟我有关」，判断不了「这条对我重要」。曾考虑过用模型做语义相关性打分，最后放弃——因为打分不可解释，也不可复验，而这个栏位的作用恰恰是让用户相信「跟我不相关的那些确实可以不看」。<strong>一个说不清理由的相关性评分，会让整页的可信度一起贬值。</strong>这条边界写进了 README 的「已知问题 / 边界」，没有藏着。</p>
+
+  <h3>同样写清楚的边界（原文照录，不做美化）</h3>
+  <ul class="tight">
+    <li>提取靠关键词规则，口语化、没关键词的待办可能漏掉；这是第一版的取舍，不是没做完的接口。</li>
+    <li>活动词是白名单（打球 / 跑步 / 游泳 / 健身 / 爬山等），没收录的活动名不会被当成「动作」。</li>
+    <li>时间识别只覆盖常见写法，复杂表达会漏；「放学前 / 下课后」不换算成具体日期。</li>
+    <li>行内切句只在句末标点、逗号 + 连接词、以及「逗号后开始一件带时间带动作的新事」时切；其余逗号不切，为的是不把「三选一」那种整句约束切碎。</li>
+    <li>主干文本是「删」出来的（删标签、删括号），不是改写出来的；括号里的内容在解析的「原文」里一字不动，但列表里不显示。</li>
+    <li>拖拽排序只在当前标签可见的条目之间调整，其他标签下被隐藏的条目位置不动。</li>
+    <li>「拖进垃圾桶删除」是唯一纯指针的操作路径；键盘用户走行内「删除」按钮或多选批量删除。</li>
+  </ul>
+</section>
+
+<!-- ================= 第四章 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>04 / AI 测试技术落地</span></div>
+
+  <div class="sechead">
+    <div class="secnum">04</div>
+    <div class="sectitle">
+      <h2>AI 测试技术落地</h2>
+      <div class="dek">AI 生成的代码如何被验证 · AI 能力自身如何被测试</div>
+    </div>
+  </div>
+
+  <h3>这个作品里，「AI 测试」指两件事</h3>
+  <p>赛道要求「AI 测试技术落地使用情况概述」。在这个作品里它有两层，本文两页都写完，不含糊：</p>
+  <table>
+    <thead><tr><th style="width:22%">层次</th><th style="width:38%">对象</th><th>落地方式</th></tr></thead>
+    <tbody>
+      <tr><td><strong>① 过程层</strong></td><td>AI 写出来的代码，怎么确认它真的能用</td><td>不信任 AI 的自述结论；一律在真实浏览器里执行，用可观察的 DOM 状态与视觉结果判定；把判定写成可重复跑的脚本</td></tr>
+      <tr><td><strong>② 产品层</strong></td><td>作品自身的 AI 能力（可选提取通道），怎么确认它不会骗人</td><td>三条失败路径必须有明确行为：未配置走本地规则、请求失败回退、证据对不上丢弃</td></tr>
+    </tbody>
+  </table>
+
+  <h3>过程层：验证矩阵（15 项，含实测值）</h3>
+  <p>下面这张表不是「设计目标」，是 <code>submission/smoke_test.py</code> 在 Chromium 里跑出来的实测值（2026-11-17，视口 1440×1100，输入 <code>sample-chat.txt</code>）。列「实测」的数字可直接复跑复现。</p>
+  <table>
+    <caption>5 项基本 + 3 项 AI 分支 + 3 项日历 + 2 项主题 + 2 项备份</caption>
+    <thead><tr><th style="width:26%">测试项</th><th style="width:28%">操作</th><th style="width:30%">预期</th><th>实测（2026-11-17）</th></tr></thead>
+    <tbody>
+      <tr><td>① 正常提取 + 依据</td><td>贴样本 → 提取</td><td>8 条，每条可看依据</td><td class="t-ok">待办 5 / 待确认 3 = 8 条；依据「明天下午5点」「别忘」</td></tr>
+      <tr><td>② 重复合并</td><td>同上（第 9 行重复）</td><td>高数作业只 1 条，提示合并</td><td class="t-ok">合并 1 条</td></tr>
+      <tr><td>③ 空输入</td><td>清空输入台 → 提取</td><td>提示，不清空清单</td><td class="t-ok">「先把群聊记录贴进来…原有的 8 条都还在」</td></tr>
+      <tr><td>④ 无待办</td><td>贴纯闲聊 → 提取</td><td>提示，原条目保留</td><td class="t-ok">「没识别到新待办；原有 8 条都保留着」</td></tr>
+      <tr><td>⑤ 追加而非覆盖</td><td>再贴 1 条新消息 → 提取</td><td>变 9 条，旧状态不动</td><td class="t-ok">4 / 4 / 1 = 9 条，完成状态保留</td></tr>
+      <tr><td>⑥ 未配置 AI</td><td>不填 Key → 提取</td><td>走本地规则，不联网</td><td class="t-ok">与 ① 结果完全一致</td></tr>
+      <tr><td>⑦ 请求失败回退</td><td>填错 Key → 提取</td><td>回退本地规则并提示</td><td class="t-ok">出结果 + 提示已回退</td></tr>
+      <tr><td>⑧ 证据校验丢弃</td><td>构造证据不在原文的条目</td><td>该条被丢弃</td><td class="t-ok">不进入列表</td></tr>
+      <tr><td>⑨ 日历落点</td><td>切日历</td><td>有日期入格，认不出进未排期</td><td class="t-ok">3 格共 4 条；未排期 4 条；最挤 11/18（2 条）</td></tr>
+      <tr><td>⑩ 手动排期</td><td>详情里选日期 → 刷新</td><td>位置保留</td><td class="t-ok">刷新后仍在 11/19</td></tr>
+      <tr><td>⑪ 清除排期</td><td>详情里点「清除」</td><td>回到未排期</td><td class="t-ok">回未排期，原文说法不变</td></tr>
+      <tr><td>⑫ 主题切换</td><td>点主题按钮</td><td>纸白 ⇄ 牛皮纸，背景同步</td><td class="t-ok">纸白 → kraft</td></tr>
+      <tr><td>⑬ 主题持久</td><td>刷新</td><td>保持</td><td class="t-ok">刷新后仍为 kraft</td></tr>
+      <tr><td>⑭ 备份导出导入</td><td>导出 → 清 localStorage → 导入</td><td>原文与条目恢复</td><td class="t-ok">恢复完整，重复导入不产生副本</td></tr>
+      <tr><td>⑮ 刷新后数据仍在</td><td>F5</td><td>条目、状态、顺序保留</td><td class="t-ok">4 / 4 / 1 与完成数 1 均保留</td></tr>
+    </tbody>
+  </table>
+
+
+  
+
+  <h3>产品层：三条失败路径必须有明确行为</h3>
+  <p>「AI 可选」这个设计最容易出的问题是<strong>失败时静默</strong>：Key 错了、接口跨域、额度用尽，页面转一圈什么都没变，用户以为工具坏了。所以这三条路径被当成功能来测，而不是当成异常来处理。</p>
+  <table>
+    <thead><tr><th style="width:24%">路径</th><th style="width:36%">期望行为</th><th>怎么测</th></tr></thead>
+    <tbody>
+      <tr><td>未配置 AI</td><td>直接走本地规则，不发任何网络请求</td><td>DevTools Network 面板全程应为空（打开页面到提取完成）</td></tr>
+      <tr><td>配置了但请求失败</td><td>自动回退本地规则，并在结果旁明确提示</td><td>故意填错 Key，或在接口地址填一个不存在的域名</td></tr>
+      <tr><td>AI 返回缺证据</td><td>该条整条丢弃，不写进列表</td><td>用本地假接口返回一条证据不在原文里的条目，观察它不出现</td></tr>
+    </tbody>
+  </table>
+  <p>还有一条容易被忽略的：<strong>相同输入命中本地缓存</strong>，避免用户反复点提取时重复计费。缓存键是输入文本的摘要，换一段输入才会重新请求。</p>
+
+  <h3>为什么没有引入自动化测试框架</h3>
+  <p>这个项目零依赖、零构建，引入 Playwright 或 Vitest 会让「10 分钟复现」变成「先 npm install 再 npm test」——对一个以「双击即开」为核心约束的作品，这是把评审的验证成本从 0 提高到了不可忽略。<strong>取舍是：把验证脚本留在仓库里，但它不参与运行。</strong></p>
+  <p><code>submission/smoke_test.py</code> 是本文写作时用来产出 4.2 表格实测值的脚本：它用 Playwright 打开 <code>file://</code> 页面，模拟粘贴、点击、刷新，读取 DOM 状态并输出 JSON。评审可以装一次 Playwright 复跑它，也可以完全跳过——README 里那张手工 10 条表才是主路径，8 分钟跑完，不需要任何环境。</p>
+
+  <div class="note">
+    <b>一句话总结这一章</b>：过程层的验证原则是<strong>不采信 AI 的自述结论，只采信在真实浏览器里观察到的状态</strong>；产品层的验证原则是<strong>每一条失败路径都要有用户看得见的行为</strong>。这两条加起来，才让「AI 生成」的代码可以被当成自己的代码来担保。
+  </div>
+
+  <h3>一个具体的例子：AI 说「动画播完了」</h3>
+  <div class="quote">
+    <span class="who">Prompt 链 02 · 2026-10-15 23:57</span>
+    <p>第一版删除动效交付时，AI 的验收结论是「退出动画播完才真正移除」。代码确实跑了，<code>setTimeout</code> 也按 400ms 执行。<strong>但我在浏览器里删了一条，什么都没看见。</strong></p>
+    <p>这不是 AI 撒谎，是它的验收标准选错了：它验证的是「代码执行了」，而需求是「人看见了」。这条链的后续三轮（逐帧取证 → 路径量化 → 定位加载时快照的常量）完整记在第六章 6.5。</p>
+  </div>
+  <p>这个例子直接改写了本项目的验证规则，并写进了 <code>AGENTS.md</code>：<strong>必须在浏览器里实际打开验证，不能只读代码判断「应该能跑」</strong>。这条规则不是口号，它是从一次真实的误判里长出来的。</p>
+</section>
+
+<!-- ================= 第五章 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>05 / 关键技术</span></div>
+
+  <div class="sechead">
+    <div class="secnum">05</div>
+    <div class="sectitle">
+      <h2>关键技术</h2>
+      <div class="dek">规则层 · 时间解析 · 去重语义 · 可解释性 · AI 通道 · 存储</div>
+    </div>
+  </div>
+
+  <h3>四层结构：每个文件只做一件事</h3>
+  <table>
+    <thead><tr><th style="width:20%">文件</th><th style="width:9%">行数</th><th style="width:30%">职责</th><th>不做什么</th></tr></thead>
+    <tbody>
+      <tr><td><code>index.html</code></td><td class="num">436</td><td>页面结构与交互骨架</td><td>不写业务判断，不含内联样式规则</td></tr>
+      <tr><td><code>styles.css</code></td><td class="num">2097</td><td>语义色层 + 组件规则 + 双主题映射</td><td>组件规则不写死色值，只引用语义变量</td></tr>
+      <tr><td><code>app.js</code></td><td class="num">3469</td><td>提取规则 / 状态 / 渲染 / 日历 / 备份 / AI 通道</td><td>规则常量不许散落到渲染函数里</td></tr>
+      <tr><td><code>bg-shader.js</code></td><td class="num">161</td><td>WebGL 背景着色器，随主题换色</td><td>不参与业务状态，失败时静默降级</td></tr>
+    </tbody>
+  </table>
+
+  <h3>规则集中在顶部常量：这是可审查性的前提</h3>
+  <p>「AI 生成的代码」最怕的是判断逻辑散落在各处，改一处漏三处。所以所有规则常量被收在 <code>app.js</code> 的前 90 行，并写进 <code>AGENTS.md</code> 作为常驻约束：</p>
+  <table>
+    <caption>行号为当前 HEAD 实测（<code>grep -n</code> 可复核）</caption>
+    <thead><tr><th style="width:22%">常量</th><th style="width:9%">行</th><th>作用</th></tr></thead>
+    <tbody>
+      <tr><td><code>ACTION_WORDS</code></td><td class="num">5</td><td>动作词表：提交 / 报名 / 完成 / 回复 / 上传 / 打印 / 缴费 …</td></tr>
+      <tr><td><code>ACTIVITY_WORDS</code></td><td class="num">10</td><td>活动词白名单：打球 / 跑步 / 游泳 / 爬山…（带明确时间也算待办）</td></tr>
+      <tr><td><code>WEAK_WORDS</code></td><td class="num">17</td><td>含糊词：到时候 / 可能 / 有空 / 再说…（决定进「待确认」）</td></tr>
+      <tr><td><code>TIME_RE</code></td><td class="num">42</td><td>唯一的时间正则，覆盖绝对/相对/时段/钟点/月旬等写法</td></tr>
+      <tr><td><code>COLLECTIVE_WORDS</code></td><td class="num">49</td><td>面向全班：我班 / 全班 / 请大家 / 全体成员…</td></tr>
+      <tr><td><code>REQUEST_WORDS</code></td><td class="num">50</td><td>请求词：谁有 / 帮忙 / 借我 / 发我…（归「请求」类型）</td></tr>
+      <tr><td><code>CHOICE_RE</code></td><td class="num">51</td><td>选一约束：三选一 / 五选一（整句不切碎）</td></tr>
+      <tr><td><code>STORAGE_KEY</code></td><td class="num">87</td><td><code>group-chat-todo:v1</code>，本地数据结构版本号</td></tr>
+    </tbody>
+  </table>
+  <p>对应地，判断入口也集中：<code>extract(content, source, noteIn)</code> 在第 722 行做单条判定，<code>extractAll(text)</code> 在第 873 行做按行解析与逐条汇总。想改「什么算待办」，只需要动这两处与上面的常量，不需要碰渲染。</p>
+
+  <h3>时间解析：一个正则，一条锚点规则</h3>
+  <p><code>TIME_RE</code> 是一条长正则，按优先级覆盖六类写法：绝对日期（<code>2026.11.18</code> / <code>10.21</code> / <code>19号</code>）、相对天数（今天 / 明天 / 后天 / 大后天 / 三天后 / 24小时后）、相对周（周五之前 / 下周二 / 本周末 / 下下周）、时段 + 钟点（晚上7点 / 下午两点半 / 上午10:30）、月旬（月底 / 月初）、相对事件（放学前 / 下课后 / 睡前）。</p>
+  <p>解析落点由 <code>resolveDeadline(text, anchorTs)</code>（第 421 行）完成，<strong>锚点是每条待办自己的导入时间</strong>，不是「当前时间」。这条规则解决了一个真实存在的漂移问题：如果以打开页面的时刻为锚，昨天导入的「明天交作业」今天再看就变成了今天交。日期一旦落定（<code>ensureDueDates()</code>，第 569 行），后续批次与重新打开都不会改写它。</p>
+  <p>另有两类刻意不猜：相对事件（「放学前」）保留原文说法但进「未排期」；带时间的非日期数字（「3号线」「3号楼」「1.5倍」）由边界条件排除，不会当成日期。</p>
+
+
+  
+
+  <h3>去重与追加：两种操作，两套语义</h3>
+  <table>
+    <thead><tr><th style="width:22%">场景</th><th style="width:38%">语义</th><th>实现要点</th></tr></thead>
+    <tbody>
+      <tr><td>同一批里重复</td><td>合并为一条，提示「合并 N 条」</td><td>按正文归一化后比对；保留首条的出现顺序与来源行</td></tr>
+      <tr><td>再次提取</td><td><strong>追加</strong>，不替换</td><td>已有正文跳过；旧条目的 <code>done</code>、手动排期、顺序字段一律不覆盖</td></tr>
+      <tr><td>旧条目在「待确认」，新规则判成待办</td><td>顺手转正</td><td>否则旧的误判重新提取多少遍都卡在原处；已完成的条目不动</td></tr>
+      <tr><td>空输入 / 无新待办</td><td>清单原样保留</td><td>只更新提示文案，不进入任何写入路径</td></tr>
+    </tbody>
+  </table>
+  <p>「导入于」显示的是该条目<strong>进来那天</strong>，而不是最近一次提取的时间——否则每次追加都会把整张清单的时间戳刷新一遍，用户就看不出哪些是新进的了。</p>
+
+  <h3>可解释性：依据必须是原文里的字</h3>
+  <p>这一条是架构级约束，不是 UI 文案约束。数据结构上，每条待办携带：命中时间的原文片段、命中关键词、来源行号、原始整行、以及判定类型（任务 / 提醒 / 请求 / 说明）。解析面板只负责把这些字段渲染出来，<strong>不做二次解释</strong>——因为一旦在渲染层「补一句人话」，那句话就可能和原文不符。</p>
+  <p>动作词的选取也遵循同一原则：取<strong>信息量最大</strong>的那个（先比长度，再比出现得早）。所以「尽快完成考试，并且在提交之后…」报的是「完成」而不是被「提交」抢走。</p>
+
+  <h3>AI 通道：提示词、证据校验、缓存、回退</h3>
+  <p>三个函数分工明确，都在 <code>app.js</code> 里可定位：</p>
+  <ul class="tight">
+    <li><code>buildAIExtractPrompt(chat)</code>（第 2073 行）——构造提示词，把判定规则、输出 JSON 结构、以及「证据必须逐字来自原文」写死在里面。</li>
+    <li><code>parseAIItems(text, chat)</code>（第 2110 行）——解析返回的 JSON，并对每一条执行证据校验：把 AI 给的证据片段拿到用户原文里做逐字匹配，不通过整条丢弃。</li>
+    <li><code>aiExtract(text)</code>（第 2241 行）——编排：取缓存 → 发请求 → 解析 → 校验 → 失败回退本地规则。</li>
+  </ul>
+  <pre>// 证据校验的思想（示意，非源码逐字）
+const ok = item.evidence &amp;&amp; chat.includes(item.evidence);
+if (!ok) drop(item);   // 整条丢弃，不降级为「无依据条目」</pre>
+  <p>为什么是「丢弃」而不是「保留但标记无可信依据」？因为列表的用途是「照做」。一条没有可核对依据的待办，在用户眼里和一条编造的待办没有区别，而前者更危险——它看起来是真的。</p>
+
+  <h3>存储 schema 与版本号</h3>
+  <p>全部状态存在一个 <code>localStorage</code> 键下，值是一个带版本的对象：<code>items</code>（条目数组，每条含正文、类型、时间原文、截止日期、导入时间、来源行、完成状态）、<code>chat</code>（群聊原文）、<code>theme</code>、<code>aiConfig</code>（服务商 / 地址 / 模型 / Key）。版本号 <code>group-chat-todo:v1</code> 让未来的结构变更可以做迁移，而不是让旧数据静默错乱。</p>
+
+  <h3>渲染与动效预算</h3>
+  <p>日历用 <code>renderCalendar()</code>（第 2483 行）按月生成 7×6 的网格，每格带 <code>data-load</code>（0–3）用于三档底纹；周末另一档颜色；过期未完成加 <code>is-overdue</code>。列表渲染 <code>renderList()</code>（第 1128 行）与详情 <code>renderDetail()</code>（第 968 行）分离，点条目只重绘右侧解析面板，不重建整个列表。</p>
+  <p>动效全部落在 <code>transform</code> 与 <code>opacity</code> 上：删除弧线用 CSS keyframes + FLIP 计算剩余条目的位次差，拖拽用 <code>translate</code> 跟随指针并给拖拽项提升层级。<strong>没有一处动效触发 layout</strong>，也没有引入动画库。</p>
+
+
+  
+
+  <h3>WebGL 背景：一个 161 行的着色器，和它唯一一次事故</h3>
+  <p>背景不只是一张图，而是一个原生 WebGL 着色器：主题的四种颜色在纸底上缓慢晕染漂移，叠加细纸噪点，鼠标移动带一层光晕。它只依赖一个 <code>&lt;canvas&gt;</code>，没有 three.js，没有构建。</p>
+  <p>它带来过一次真实的 bug，也是三条 Prompt 链里最短的一条：<strong>全屏放大或缩小时，某些颜色会变成黑色。</strong>症状只在渲染里出现，代码看起来处处正确。根因是 canvas 尺寸改变后没有重新分配绘制缓冲，viewport 与绑定状态回不到可用状态；修法不是加判断，而是把绑定收成一个可重放的 <code>bindState()</code>，并在 resize 后重绘一帧（<code>20e665c</code>）。</p>
+  <div class="quote">
+    <span class="who">链 03 的验证方式</span>
+    <p>AI 的验证不是「代码看起来对」，而是改视口 + 截图。这条做法后来写进了 <code>AGENTS.md</code>：「必须在浏览器里实际打开验证，不能只读代码判断『应该能跑』」。同一个 bug 的复现方法也留在了 prompt-log 里：<code>git worktree add ../demo-shader 21d5824</code>，打开后拖动窗口宽度从 1920 缩到约 800，背景会出现黑色块。</p>
+  </div>
+
+  <h3>技术选型一览</h3>
+  <table>
+    <thead><tr><th style="width:24%">能力</th><th style="width:30%">实现</th><th>为什么不换别的</th></tr></thead>
+    <tbody>
+      <tr><td>提取规则</td><td>正则 + 关键词表 + 分级判定</td><td>可读、可改、可逐条解释；模型做不到这三件事</td></tr>
+      <tr><td>时间解析</td><td>单条 <code>TIME_RE</code> + <code>resolveDeadline()</code> 锚点换算</td><td>无需引入日期库；覆盖日常写法足够，且失败时行为可控</td></tr>
+      <tr><td>状态</td><td>内存对象 + <code>localStorage</code> 全量写入</td><td>数据量在几十条量级，全量写入比增量同步更不容易出错</td></tr>
+      <tr><td>渲染</td><td>原生 DOM 操作 + 事件委托</td><td>数百个节点，虚拟 DOM 是负收益</td></tr>
+      <tr><td>动效</td><td>CSS keyframes / transition + FLIP 计算</td><td>合成层属性，不吃主线程；无库无构建</td></tr>
+      <tr><td>背景</td><td>原生 WebGL 片元着色器</td><td>纯 CSS 渐变做不出四色缓慢漂移与噪点质感</td></tr>
+      <tr><td>AI 通道</td><td>浏览器直连 OpenAI 兼容接口（<code>fetch</code>）</td><td>不经过任何中间服务器，Key 不离开本机</td></tr>
+      <tr><td>备份</td><td>Blob + <code>&lt;a download&gt;</code>，<code>file://</code> 下降级为「另存为」/「复制备份」</td><td>在双击打开的场景下也能用</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <b>关于「没有框架」</b>：这是刻意的约束，不是能力限制。需求是「双击即开、默认离线」，框架和构建步骤只会让复现多一步、让评委多装一次 Node。<strong>「一键复现」在这里不是承诺，是一个文件操作。</strong>
+  </div>
+</section>
+
+<!-- ================= 第六章 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>06 / 意图控制策略</span></div>
+
+  <div class="sechead">
+    <div class="secnum">06</div>
+    <div class="sectitle">
+      <h2>意图控制策略</h2>
+      <div class="dek">判断权在人，实现权在 AI · 三条链的原始记录</div>
+    </div>
+  </div>
+
+  <p>整个项目的协作方式可以压缩成一句话：<strong>判断权在我，实现权在 AI。</strong>这不是姿态，是一条可操作的分工——它决定了每次对话里我给什么、AI 给什么、谁来验收。</p>
+
+  <h3>每次只给三样东西</h3>
+  <table>
+    <thead><tr><th style="width:26%">给什么</th><th style="width:36%">为什么这样给</th><th>例子（原文）</th></tr></thead>
+    <tbody>
+      <tr><td><strong>一条反常的事实</strong></td><td>把搜索空间从「整套代码」压缩到「这段代码与其他部分的差异」</td><td>「刚把动画效果打开，可以看到动效了，但是删除还是直接消失」</td></tr>
+      <tr><td><strong>一段真实的失败样本</strong></td><td>让 AI 面对具体现象而不是我的复述</td><td>「没有曲线删除啊」——六个字，没有解释、没有指路</td></tr>
+      <tr><td><strong>一次把主观反馈逼成方案的要求</strong></td><td>「有点刺眼」无法执行，「四组具体色值、高饱和面积砍到 1/4」可以</td><td>「有些刺眼」→ AI 给出四组色值并重排配色比例</td></tr>
+    </tbody>
+  </table>
+  <p>反过来，我几乎不写「你应该怎么改」。原因很实际：一旦我开始指定实现，AI 就退化成打字机，bug 的根因判断也就没人负责了。<strong>我不控制代码，我控制输入的事实和验收的标准。</strong></p>
+
+  <h3>常驻约束：把协作方式写进仓库</h3>
+  <p>每次临时提醒「记得在浏览器里验证」是不可靠的。所以这套要求被固化成了仓库里的 <code>AGENTS.md</code>（36 行，<code>CLAUDE.md</code> 用 <code>@AGENTS.md</code> 引入同一份，不另存副本），AI 每次开工前先读它。它只回答四个问题：</p>
+  <table>
+    <thead><tr><th style="width:22%">问题</th><th>答案（节选）</th></tr></thead>
+    <tbody>
+      <tr><td>先读什么</td><td>PRD.md（需求边界）→ 现有实现 → sample-chat.txt（合成样本）</td></tr>
+      <tr><td>可以改哪里</td><td>规则集中改 <code>app.js</code> 顶部常量与 <code>extract()</code>；日期改 <code>resolveDeadline()</code> / <code>ensureDueDates()</code>；AI 相关改 <code>buildAIExtractPrompt()</code> / <code>parseAIItems()</code> / <code>aiExtract()</code>；主题只改语义层</td></tr>
+      <tr><td>怎么检查</td><td>必须在浏览器里实际打开验证，不能只读代码判断「应该能跑」；覆盖正常 / 空输入 / 无待办 / 重复合并 / 刷新保持五种情况；每条待办都要能说出「为什么」</td></tr>
+      <tr><td>哪些不能做</td><td>不用真实姓名手机号学号；不连微信 QQ、不做登录后端；不内置密钥；不引入框架与构建；没实现的不写进 README</td></tr>
+    </tbody>
+  </table>
+  <p>这四问的作用不是「约束 AI 的行为」，而是<strong>把验收标准前置成输入条件</strong>。AI 在动手之前就知道自己要交什么样的东西，比事后打回重做便宜得多。</p>
+
+
+  
+
+  <h3>三条 Prompt 链：一次视觉重构、一次缺陷追溯、一次渲染修复</h3>
+  <p>它们是开发过程中最有信息量的三段，完整记录在 <code>docs/prompt-log/</code>，每条都自带可独立运行的复现步骤。原始记录共 93 轮提问 / 278 轮回复，已脱敏（本机用户名、项目目录名、第三方邮箱与具体地点替换为占位符）。</p>
+  <table>
+    <thead><tr><th style="width:8%">#</th><th style="width:30%">主题</th><th style="width:14%">类型</th><th style="width:28%">对应提交</th><th>它证明了什么</th></tr></thead>
+    <tbody>
+      <tr><td class="num">01</td><td>一句模糊的设计要求，换掉了整个界面</td><td>视觉重构</td><td><code>61f3bb4</code> → <code>c275340</code></td><td>模糊输入可以先被翻译成可执行规则，再被执行</td></tr>
+      <tr><td class="num">02</td><td>AI 说动画播完了，我说没有</td><td>缺陷追溯</td><td><code>6709602</code> → <code>8a3eaa3</code> → <code>6ffc3a6</code> → <code>faedab6</code></td><td>AI 的「验收通过」不是验收；先测量再改</td></tr>
+      <tr><td class="num">03</td><td>一句话症状，一个只在渲染里出现的 bug</td><td>渲染修复</td><td><code>20e665c</code></td><td>最小的修复范围比「重构一遍」更有价值</td></tr>
+    </tbody>
+  </table>
+
+  <h3>链 02 逐轮摘录：三轮，从「看不见」到「一行修复」</h3>
+
+  <div class="quote">
+    <span class="who">第 1 轮 · 2026-10-15 23:57 · 我的 Prompt（原文）</span>
+    <p>「当我要删除一条待办时要有动画跳出来，并且给出提示警告」</p>
+  </div>
+  <p>AI 把 <code>window.confirm</code> 换成自定义确认弹窗，确认后条目先跳出去、动画播完才移除（<code>6709602</code>）。它的验收结论是「退出动画播完」。<strong>我在真机上没看到。</strong>第 2 轮 12:59 落了弧线 + FLIP 的版本（<code>8a3eaa3</code>），13:03 我在浏览器里删了一条，回了六个字。</p>
+
+  <div class="quote">
+    <span class="who">第 2 轮 · 2026-10-16 13:03 · 我的 Prompt（原文）</span>
+    <p>「没有曲线删除啊」</p>
+  </div>
+  <p>AI 没有顺着我说「确实没有」，也没有直接重写。它把动画冻结在 <strong>0 / 60 / 120 / 180 / 240ms</strong> 逐帧截图，结论是：<strong>动画在跑</strong>——各帧都不同，条目在倾斜、上移、然后下落淡出。但我的感觉也是对的：它看起来不像一条曲线。原因是两个很具体的量：</p>
+  <ul class="tight">
+    <li>这是一行约 1400px 宽的条目，位移只有 <strong>38px（约 2.7%）</strong>，肉眼基本无感。</li>
+    <li>旋转是更糟的信号：在这么宽的行上转 2°，右端会被压下几十像素，看起来像「整行歪掉」，而不是曲线。</li>
+  </ul>
+  <p>它先自己否掉了第一版修法（<code>overflow:hidden</code> + 2° 旋转，向上的弧会撞到上面的摘要文字），再做路径量化：dx/dy 的斜率从 0.09 升到 0.36 再回落——<em>「向右滑出的同时后半程明显下坠，是条实打实的弧。」</em>最终 <code>6ffc3a6</code> 把位移加到 <strong>dx 420 / dy 165</strong>，旋转压到 <strong>≤1.4°</strong>，并让列表容器裁掉越界部分。</p>
+
+
+  
+
+  <div class="quote">
+    <span class="who">第 3 轮 · 2026-10-16 13:12 · 我的 Prompt（原文）</span>
+    <p>「刚把动画效果打开，可以看到动效了，但是删除还是直接消失」</p>
+  </div>
+  <p>这句话描述的是一个几乎不可能是巧合的组合：<strong>别的动画都好了，只有删除立刻消失。</strong>AI 的判断是：</p>
+  <div class="quote" style="border-left-color:var(--indigo)">
+    <p>「能看到其他动效但删除直接消失——这个组合很可疑。我怀疑 <code>REDUCE_MOTION</code> 在页面加载时被<strong>快照</strong>成了常量……CSS 媒体查询是实时的、所以其他动效正常了。」</p>
+    <p>紧接着一句：<strong>「先写个复现测试确认，不猜。」</strong></p>
+  </div>
+  <p>复现测试确认了故障：点击删除瞬间，浏览器实时媒体查询是 <code>false</code>（允许动画），但代码仍把条目立即移除（<code>itemsAt60ms: 3</code>、<code>leavingClassAt60ms: false</code>）。</p>
+  <pre>// 根因：加载时快照
+const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ITEM_OUT_MS = REDUCE_MOTION ? 0 : 400;
+
+// 修复：调用时实时读取
+const reduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+function prefersReduce() { return reduceMQ.matches; }
+const ITEM_OUT_MS = 400;</pre>
+  <table>
+    <thead><tr><th style="width:26%">场景</th><th style="width:30%">修复前（<code>6ffc3a6</code>）</th><th>修复后（<code>faedab6</code>）</th></tr></thead>
+    <tbody>
+      <tr><td>加载时 reduce → 之后打开动画（不刷新）</td><td class="t-no">直接消失 ✗</td><td class="t-ok">正常播放弧线 ✓</td></tr>
+      <tr><td>真实 reduce 环境</td><td class="t-ok">跳过 ✓</td><td class="t-ok">跳过 ✓（正确行为）</td></tr>
+      <tr><td>正常环境</td><td class="t-ok">正常 ✓</td><td class="t-ok">正常 ✓，无残留 transform</td></tr>
+    </tbody>
+  </table>
+  <p>产物 <code>faedab6</code> 只改 <code>app.js</code>，<strong>+9 / −4 行</strong>。</p>
+
+  <h3>这条链给出的三条可复用结论</h3>
+  <ol class="tight">
+    <li><strong>AI 的「验收通过」不是验收。</strong>它验证的是「代码执行了」，而需求是「人看见了」。验收标准必须由用户在真实设备上执行；AI 的截图和 DOM 状态只能证明前者。</li>
+    <li><strong>「没有」不是需求，是症状。</strong>「没有曲线删除啊」这句里没有任何实现信息，但它触发了正确的动作：先逐帧取证，确认「动画在跑但读不出来」，再改位移与旋转。先测量、再改参数，比「再改一版」可靠得多。</li>
+    <li><strong>最有信息量的一句是反常事实。</strong>「其他动效都好了，只有删除不行」把搜索空间从「整套动画代码」压缩到了「这段代码和其他动效的差异」——那个差异就是加载时快照的常量。我没有靠「还是不对」推进，而是靠提供一条可被检验的反常。</li>
+  </ol>
+
+  <h3>这套方法的代价（诚实说）</h3>
+  <p>它比「让 AI 直接改」慢。第 2 轮从我给出六个字到落 commit 用了 3 分钟，但第 3 轮之前有一个完整的复现测试、一次根因定位、一次双场景回归——总耗时远大于一次盲改。收益是可预期的：<strong>每次修复的回归范围都可控，且「为什么修好了」能一句话说清。</strong></p>
+  <p>它也不总能成功。链 01 的界面重设计里，AI 给出的第一版配色被判定「刺眼」，第二版才通过；链 02 的第 1 轮，AI 的验收结论直接是错的。<strong>这套方法的真正价值不在于「AI 少犯错」，而在于「AI 犯错时能被发现，且发现得早」。</strong></p>
+
+  <h3>本章速查：这套协作方式的四个动作</h3>
+  <table>
+    <thead><tr><th style="width:18%">动作</th><th style="width:40%">我做什么</th><th>它换来了什么</th></tr></thead>
+    <tbody>
+      <tr><td>定方向</td><td>写 PRD：谁用、解决什么、第一版做什么、暂不做什么、怎样算完成</td><td>AI 不必猜需求，返工量下降；验收标准事先可写</td></tr>
+      <tr><td>给事实</td><td>只提供反常现象与真实失败样本，不指定实现</td><td>根因定位由 AI 负责，改错方向时能被立刻发现</td></tr>
+      <tr><td>立约束</td><td>把「可改哪里 / 怎么检查 / 不能做什么」写进 <code>AGENTS.md</code></td><td>约束变成输入条件，而不是每次重复提醒</td></tr>
+      <tr><td>做验收</td><td>在真实浏览器里逐条对照 PRD 与 10 条验收表</td><td>「代码跑了」与「人看见了」被区分开</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================= 第七章 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>07 / 架构设计</span></div>
+
+  <div class="sechead">
+    <div class="secnum">07</div>
+    <div class="sectitle">
+      <h2>架构设计</h2>
+      <div class="dek">AI 生成的代码用了什么架构，我如何约束它</div>
+    </div>
+  </div>
+
+  <h3>分层与依赖方向</h3>
+  <pre>index.html          结构骨架（无业务判断）
+   │
+styles.css          语义色层 → 组件规则 → 主题映射（单向）
+   │
+app.js
+   ├─ 常量层        规则表 / 时间正则 / 存储键        app.js:5–90
+   ├─ 解析层        extract() → extractAll()          app.js:722 / 873
+   │                resolveDeadline() → ensureDueDates()   421 / 569
+   ├─ 状态层        items[] + save()/load()           1247 / 1253
+   ├─ 通道层        buildAIExtractPrompt() → parseAIItems() → aiExtract()
+   └─ 渲染层        renderList() / renderDetail() / renderCalendar()
+   │
+bg-shader.js        独立渲染模块，读主题变量，失败静默降级</pre>
+  <p>依赖是单向的：<strong>渲染层可以读状态，状态层不知道渲染层的存在，解析层不知道 DOM</strong>。这条边界带来的直接好处是可测试性——<code>extract()</code> 是纯函数（输入文本 + 锚点，输出条目数组），给它一段文本就能验证判定，不需要启动页面。</p>
+
+  <h3>约束不是靠自觉，靠三道闸</h3>
+  <table>
+    <thead><tr><th style="width:20%">闸门</th><th style="width:36%">内容</th><th>作用时机</th></tr></thead>
+    <tbody>
+      <tr><td>① 文档闸</td><td><code>AGENTS.md</code> 写明「规则优先动顶部常量与 <code>extract()</code>，不要散落到渲染代码里」</td><td>AI 每次开工前读，成为输入条件</td></tr>
+      <tr><td>② 结构闸</td><td>常量真的收在前 90 行；渲染函数不新增判定分支</td><td>代码评审时一眼可见</td></tr>
+      <tr><td>③ 验收闸</td><td>改完必须在浏览器里跑通 5 种基本情况，并在 README 的 10 条表里逐条对照</td><td>提交前</td></tr>
+    </tbody>
+  </table>
+  <p>三道闸里，只有第 ① 道是「告诉 AI 怎么做」，其余两道都是<strong>可观察的结果</strong>。这也是为什么这套协作能在几个月里保持稳定：约束落在了结构和验收上，而不是落在提示词的措辞上。</p>
+
+  <h3>为什么是单文件应用，而不是模块拆分</h3>
+  <p>3469 行放在一个 <code>app.js</code> 里，看起来违背常识。但对一个「双击即开、无构建」的作品，拆成多个 ES Module 会引入一个真实成本：<code>file://</code> 协议下浏览器会因 CORS 拒绝加载模块脚本。<strong>要保持「双击即开」，就必须单文件。</strong></p>
+  <p>作为补偿，文件内部用<strong>分区注释 + 常量前置</strong>维持可读性：常量在最上面，解析函数紧随其后，渲染函数集中在中后段，事件绑定与初始化在末尾。加上 6163 行总量与清晰的函数命名，滚动查找的成本可以接受。</p>
+
+  <h3>安全与性能上的明确取舍</h3>
+  <ul class="tight">
+    <li><strong>不存密钥于代码</strong>：API Key 只进 <code>localStorage</code>；<code>git grep -n "sk-"</code> 应为空，可复核。</li>
+    <li><strong>不渲染不可信 HTML</strong>：AI 返回的内容经 <code>parseAIItems()</code> 解析后以纯文本写入，<code>textContent</code> 而非 <code>innerHTML</code>，避免注入。</li>
+    <li><strong>无死循环风险</strong>：动效由 <code>setTimeout</code> 一次性收尾，无轮询、无递归定时器。</li>
+    <li><strong>失败必降级</strong>：WebGL 不可用 → 纯色底；AI 不可用 → 本地规则；<code>file://</code> 下载被拦 → 系统「另存为」/「复制备份」。</li>
+  </ul>
+</section>
+
+<!-- ================= 第八章 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>08 / 可复现性论证</span></div>
+
+  <div class="sechead">
+    <div class="secnum">08</div>
+    <div class="sectitle">
+      <h2>可复现性论证</h2>
+      <div class="dek">10 分钟跑完 · 任意版本可回放 · 过程有原始记录</div>
+    </div>
+  </div>
+
+  <h3>复现的前提：没有需要配置的东西</h3>
+  <table>
+    <thead><tr><th style="width:26%">项</th><th>要求</th></tr></thead>
+    <tbody>
+      <tr><td>浏览器</td><td>Chrome / Edge / Firefox 任一最近版本</td></tr>
+      <tr><td>Node.js / 包管理器</td><td><strong>不需要</strong>（无 <code>package.json</code>，无构建产物）</td></tr>
+      <tr><td>数据库 / 后端</td><td><strong>不需要</strong></td></tr>
+      <tr><td>网络</td><td><strong>不需要</strong>（只有可选的 AI 分支需要，且可跳过）</td></tr>
+      <tr><td>环境变量 / 密钥</td><td><strong>不需要</strong>；若配置 AI，Key 只存本机 <code>localStorage</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>10 分钟复现表（实测值）</h3>
+  <table>
+    <caption>0:00 取代码 · 1:00 双击 index.html · 1:30 准备样本 · 2:00–6:00 跑完 10 条 · 6:00 可选 AI · 8:00 复位</caption>
+    <thead><tr><th style="width:6%">#</th><th style="width:30%">操作</th><th style="width:34%">预期</th><th>本机实测（2026-11-17）</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>贴 <code>sample-chat.txt</code> → 提取</td><td>8 条，每条可看依据并高亮原文</td><td class="t-ok">5 待办 / 3 待确认；依据「明天下午5点」「别忘」</td></tr>
+      <tr><td class="num">2</td><td>同上（样本第 9 行重复）</td><td>高数作业只 1 条，提示合并</td><td class="t-ok">合并 1 条</td></tr>
+      <tr><td class="num">3</td><td>勾选一条 → 切「已完成」</td><td>条目移动，三标签计数同步</td><td class="t-ok">统计块完成数 1</td></tr>
+      <tr><td class="num">4</td><td>F5</td><td>条目、完成状态、顺序、主题保留</td><td class="t-ok">4 / 4 / 1 与完成数 1 均保留</td></tr>
+      <tr><td class="num">5</td><td>清空输入台 → 提取</td><td>提示，不清空清单</td><td class="t-ok">原 8 条仍在</td></tr>
+      <tr><td class="num">6</td><td>贴纯闲聊 → 提取</td><td>「没识别到新待办」，原条目保留</td><td class="t-ok">原 8 条保留</td></tr>
+      <tr><td class="num">7</td><td>再贴一条新消息 → 提取</td><td>变 9 条，第 1 批状态不动</td><td class="t-ok">9 条</td></tr>
+      <tr><td class="num">8</td><td>切日历</td><td>有日期入格；认不出进「未排期」</td><td class="t-ok">3 格 4 条；未排期 4 条</td></tr>
+      <tr><td class="num">9</td><td>详情里选日期 → 刷新</td><td>位置保留</td><td class="t-ok">保留在 11/19</td></tr>
+      <tr><td class="num">10</td><td>备份导出 → 清 <code>localStorage</code> → 导入</td><td>原文与条目恢复，重复导入不产生副本</td><td class="t-ok">恢复完整</td></tr>
+    </tbody>
+  </table>
+  <p>上面「本机实测」列与第四章 4.2 的同名项是同一次执行的输出，脚本为 <code>submission/smoke_test.py</code>，结果 JSON 一并留在 <code>submission/_preview/smoke.json</code>。<strong>评委不需要跑脚本</strong>——手工按表操作 8 分钟即可得到同样结果。</p>
+
+
+  
+
+  <h3>演进链路：41 次提交，两次开发窗口</h3>
+  <p>仓库从 2026-10-15 20:56 的「初版：群聊待办提取器」到 2026-11-17 的材料归档，共 41 次提交，没有一次是「initial commit 带全部功能」。每次提交对应一次与 AI 的核心对话或一个功能模块的落地。</p>
+  <table>
+    <caption>关键节点（<code>git log --oneline</code> 可完整复核）</caption>
+    <thead><tr><th style="width:14%">日期</th><th style="width:46%">提交</th><th>意义</th></tr></thead>
+    <tbody>
+      <tr><td>10-15</td><td>初版：群聊待办提取器</td><td>闭环成立：粘贴 → 提取 → 完成</td></tr>
+      <tr><td>10-15</td><td>UI 改版：暗色控制台风格 → 银白浮层 → 新粗野主义</td><td>同日三次视觉迭代，对应 Prompt 链 01</td></tr>
+      <tr><td>10-15</td><td>个性元素：WebGL 着色器背景 + 标题 3D 挤出</td><td>视觉方向确立</td></tr>
+      <tr><td>10-15</td><td>fix: 修复缩放时 WebGL 背景变黑 <code>20e665c</code></td><td>对应 Prompt 链 03</td></tr>
+      <tr><td>10-16</td><td>删除动效四连：弹窗 → 弧线 → 看得见 → reduced-motion</td><td>对应 Prompt 链 02（<code>6709602</code>→<code>faedab6</code>）</td></tr>
+      <tr><td>10-18</td><td>日历视图与可选 AI 提取；纸白 / 牛皮纸双主题</td><td>功能面扩展，PRD 同步更新</td></tr>
+      <tr><td>10-19</td><td>提升本地提取精度，长通知拆条并支持待确认转正</td><td>核心算法迭代</td></tr>
+      <tr><td>10-23</td><td>开屏动画每天首次播放；AGENTS.md 入库</td><td>协作规则固化进仓库</td></tr>
+      <tr><td>11-16</td><td>备份 / 恢复；脱敏 AI 对话原始记录（93 轮）</td><td>交付材料归档</td></tr>
+    </tbody>
+  </table>
+
+  <h3>任意历史版本可回放</h3>
+  <p>每条 Prompt 链都给了可直接执行的还原命令，不需要 clone 多个仓库：</p>
+  <pre># 链 01 的初版界面（"能用"，但只是一个表单）
+git worktree add ../demo-v1 61f3bb4
+
+# 链 02 的弧线版：有弧线但位移太小，且带 reduced-motion 快照 bug
+git worktree add ../demo-del 6ffc3a6
+
+# 链 03 的修复前版本：全屏缩放时背景出现黑块
+git worktree add ../demo-shader 21d5824
+
+# 用完清理
+git worktree remove ../demo-v1 ../demo-del ../demo-shader</pre>
+  <p>三个目录各自双击 <code>index.html</code> 即可运行，行为差异肉眼可见。链 02 的 reduced-motion bug 有特定复现步骤（必须先刷新再切换），完整步骤写在 <code>docs/prompt-log/02-删除动效消失.md</code> 的「自己复现这条链」一节。</p>
+
+  <h3>过程取证：不只是「有记录」，而是「记录可用」</h3>
+  <ul class="tight">
+    <li><strong>Prompt 历史</strong>：根目录 <code>Claude对话记录-2026-10-23.md</code>，93 轮提问 / 278 轮回复，4158 行，已脱敏。</li>
+    <li><strong>精选快照</strong>：<code>docs/prompt-log/</code> 三条链，每条含我的 Prompt 原文、AI 的取证与判断、改动落点、提交号、以及独立的复现步骤。</li>
+    <li><strong>规则固化</strong>：<code>AGENTS.md</code> 记录了「先读什么 / 可以改哪里 / 怎么检查 / 哪些事不能做」，是这套协作方式的书面形态。</li>
+    <li><strong>决策留痕</strong>：<code>PRD.md</code> 与 README 的「暂不做什么」「已知问题 / 边界」保持了与实现同步，没有把未实现的写成已实现。</li>
+  </ul>
+
+  <h3>可复现性边界（如实标注）</h3>
+  <ul class="tight">
+    <li><strong>视觉细节依赖系统字体与渲染引擎。</strong>不同系统上衬线标题的字形、WebGL 噪点会有细微差异；功能与判定结果不受影响。</li>
+    <li><strong>AI 分支依赖外部服务。</strong>复现 AI 通道需自备 OpenAI 兼容接口与 Key；该分支失败会回退本地规则，因此不配 AI 也能跑完 10 条。</li>
+    <li><strong>相对日期以导入时间为锚。</strong>11-17 导入的「明天」隔天再看仍是 11-18——这是设计行为，不是漂移。</li>
+  </ul>
+</section>
+
+<!-- ================= 第九章 截图 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>09 / 界面实拍</span></div>
+
+  <div class="sechead">
+    <div class="secnum">09</div>
+    <div class="sectitle">
+      <h2>界面实拍</h2>
+      <div class="dek">全部为真实界面截图，数据来自合成样本</div>
+    </div>
+  </div>
+
+  <div class="figs">
+    <figure>
+      <img src="images/01-empty.png" alt="空态首页">
+      <figcaption><b>图 1 · 空态。</b>左侧是「填入示例并提取」的引导卡，右侧是输入台。统计块刻意错位倾斜、右下留空——负空间不对称是这套视觉的基调。</figcaption>
+    </figure>
+    <figure>
+      <img src="images/02-extract.png" alt="提取结果">
+      <figcaption><b>图 2 · 提取结果。</b>贴入 <code>sample-chat.txt</code> 后：待办 5 · 与你相关 3 · 待确认 3。每条最多两行，超出打省略号——待办台是拿来扫的，不是拿来读的。</figcaption>
+    </figure>
+    <figure>
+      <img src="images/03-detail.png" alt="单条解析">
+      <figcaption><b>图 3 · 单条解析。</b>点开一条后右侧原地切成解析面板：日期排期、提取依据、原文高亮，以及底部「打开原文 · 第 N 行」。这是「每条都能说清为什么」的实际形态。</figcaption>
+    </figure>
+    <figure>
+      <img src="images/04-calendar.png" alt="日历视图">
+      <figcaption><b>图 4 · 日历视图（纸白主题）。</b>有截止日期的条目落进月历，过期未完成标红，格内三档底纹按当天条目数区分；认不出日期的收在下方「未排期」。</figcaption>
+    </figure>
+  </div>
+
+
+  
+
+  <div class="figs">
+    <figure>
+      <img src="images/05-theme-kraft.png" alt="牛皮纸主题">
+      <figcaption><b>图 5 · 牛皮纸主题。</b>同一批条目、同一套布局，只重映射语义色变量；顶栏按钮切换，从按钮位置圆形展开，背景着色器同步换色。</figcaption>
+    </figure>
+    <figure>
+      <img src="images/06-ai-settings.png" alt="AI 设置">
+      <figcaption><b>图 6 · AI 提取设置（可选）。</b>服务商 / 接口地址 / 模型 / API Key 四项自填，支持 DeepSeek、OpenAI、本地 Ollama 与任意 OpenAI 兼容接口。Key 只存本机 <code>localStorage</code>；不配置时全程离线。</figcaption>
+    </figure>
+  </div>
+
+  <div class="figs" style="grid-template-columns:1fr">
+    <figure>
+      <img src="images/07-backup.png" alt="备份与恢复">
+      <figcaption><b>图 7 · 备份与恢复。</b>导出为 JSON（群聊原文 + 全部待办，不含 AI 配置与 Key）；导入按正文去重合并，已有条目、完成状态与手动排期都不动。双击本地文件打开时浏览器会拦截普通下载，此时走系统「另存为」，并另提供「复制备份」兜底。</figcaption>
+    </figure>
+  </div>
+
+  <div class="note">
+    <b>截图说明</b>：以上 7 张均在 Chrome 中实际渲染后截取，未做后期合成；界面上的所有昵称、时间与内容均来自 <code>sample-chat.txt</code> 的合成数据，不含任何真实个人信息。
+  </div>
+</section>
+
+<!-- ================= 第十章 ================= -->
+<section class="chapter">
+  <div class="runhead"><span><b>话里有事</b> · 群聊待办提取器</span><span>10 / 说明与附录</span></div>
+
+  <div class="sechead">
+    <div class="secnum">10</div>
+    <div class="sectitle">
+      <h2>发表情况 · 原创性 · 附录</h2>
+      <div class="dek">如实说明，不美化</div>
+    </div>
+  </div>
+
+  <h3>项目是否发表过或获奖</h3>
+  <p><strong>没有。</strong>本项目此前未在任何期刊、会议或平台发表，未参加过其他赛事，也没有获得过任何奖项或荣誉。本次是它第一次作为作品提交评审。仓库于 2026-10-15 建立，提交历史完整可查；在线体验版本部署在 GitHub Pages，公开可访问，但未做任何推广。</p>
+
+  <h3>是否在其他项目基础上优化</h3>
+  <p><strong>不是。</strong>本项目从 2026-10-15 的第一行代码起即为原创，没有基于任何已有项目的代码、结构或设计稿。需要说明的三点：</p>
+  <ul class="tight">
+    <li><strong>没有复用任何开源项目的代码。</strong>仓库无 <code>package.json</code>、无三方库、无引入的构建产物；全部 6163 行由本人与 AI 协作写出，逐次提交可查。</li>
+    <li><strong>参考了通用的公开知识。</strong>WebGL 片元着色器的基本写法、FLIP 动画的位次计算、CSS 变量做主题映射，都是公开的通用技术，未复制任何具体实现。视觉方向（新粗野主义）是通用设计风格，不是某个具体项目的界面。</li>
+    <li><strong>唯一的外部依赖是用户自填的 AI 服务。</strong>该服务由使用者自行配置，项目不内置任何服务商账号、密钥或代理。</li>
+  </ul>
+
+  <h3>附录 A · 仓库文件清单</h3>
+  <table>
+    <thead><tr><th style="width:32%">文件 / 目录</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>index.html</code> / <code>styles.css</code> / <code>app.js</code></td><td>页面结构、样式、提取与交互逻辑（436 / 2097 / 3469 行）</td></tr>
+      <tr><td><code>bg-shader.js</code></td><td>WebGL 背景着色器（161 行），随主题换色，失败静默降级</td></tr>
+      <tr><td><code>README.md</code></td><td>项目说明、十步用法、10 分钟极速复现指南、已知边界、文件说明</td></tr>
+      <tr><td><code>PRD.md</code></td><td>一页需求说明：谁用、什么问题、第一版范围、暂不做什么、怎样算完成（10 条验收）</td></tr>
+      <tr><td><code>AGENTS.md</code> / <code>CLAUDE.md</code></td><td>AI 协作者规则（先读什么 / 可改哪里 / 怎么检查 / 不能做什么）；后者用 <code>@AGENTS.md</code> 引入同一份</td></tr>
+      <tr><td><code>sample-chat.txt</code></td><td>14 行合成群聊样本，含 8 条待办、1 条重复、含糊措辞与取消通知</td></tr>
+      <tr><td><code>docs/prompt-log/</code></td><td>三条完整 Prompt 链快照 + 索引，含各自的复现步骤</td></tr>
+      <tr><td><code>Claude对话记录-2026-10-23.md</code></td><td>AI 对话原始记录（93 轮提问 / 278 轮回复），已脱敏</td></tr>
+      <tr><td><code>submission/</code></td><td>本文档的 HTML 源文件、界面截图、验证脚本 <code>smoke_test.py</code> 与其实测输出</td></tr>
+    </tbody>
+  </table>
+
+  <h3>附录 B · 演示视频章节索引（总长 07:42）</h3>
+  <table>
+    <thead><tr><th style="width:16%">时间码</th><th style="width:34%">内容</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td class="num">00:00–00:32</td><td>开场 · 自我介绍与问题</td><td>为什么做这个、解决什么问题</td></tr>
+      <tr><td class="num">00:32–01:04</td><td>项目介绍</td><td>群聊 → 待办 → 依据 → 日历的闭环与范围收窄</td></tr>
+      <tr><td class="num">01:04–02:40</td><td>核心功能演示</td><td>粘贴、提取、看依据、打开原文、待确认转正、拖拽排序、删除与撤销、多选</td></tr>
+      <tr><td class="num">02:40–03:20</td><td>AI 配置演示</td><td>可选通道；不配置时完全离线；证据校验与失败回退</td></tr>
+      <tr><td class="num">03:20–04:00</td><td>备份与恢复</td><td>导出 JSON、换浏览器导入、合并去重</td></tr>
+      <tr><td class="num">04:00–05:31</td><td><strong>AI 协同过程复现 · 链 01</strong></td><td>一句模糊的设计要求 → AI 翻译成可执行规则 → 界面重构（对应 <code>61f3bb4</code>→<code>c275340</code>）</td></tr>
+      <tr><td class="num">05:34–07:09</td><td><strong>AI 协同过程复现 · 链 03</strong></td><td>全屏缩放背景变黑 → 定位 resize 后未重绘 → <code>bindState()</code> + 重绘一帧（对应 <code>20e665c</code>）</td></tr>
+      <tr><td class="num">07:10–07:42</td><td>收尾</td><td>判断权在我，实现权在 AI</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:8.6pt;color:#6b6b6b;margin-top:2px">AI 协同过程复现合计约 3 分 09 秒，满足赛道「至少 2 分钟」的要求；视频含真人旁白与字幕，1920×1080 / 60fps / H.264。</p>
+</section>
+
+</body>
+</html>
