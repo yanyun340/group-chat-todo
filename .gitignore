@@ -3,3 +3,4 @@
 # 文档生成的中间产物
 submission/_preview/
 submission/*.zip
+submission/*.bundle
