@@ -1,0 +1,8 @@
+{
+  "_说明": "本项目没有环境变量，也不需要 .env。这是 AI 提取通道（可选）的配置模板：四个字段在页面「⚙ AI」里填写，存本机 localStorage 的 group-chat-todo:ai 键下。不填 / 填错都会自动回退本地规则，不会影响其余功能。",
+  "_字段": "provider: deepseek | openai | ollama | custom；baseUrl: 任意 OpenAI 兼容接口；model: 该接口支持的模型名；key: 仅存本机，不要提交进仓库",
+  "provider": "deepseek",
+  "baseUrl": "https://api.deepseek.com",
+  "model": "deepseek-chat",
+  "key": "<你的 API Key，只存在本机 localStorage>"
+}

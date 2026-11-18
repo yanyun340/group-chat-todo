@@ -1,7 +1,5 @@
 # 话里有事
 
-大数据二班黄树睿
-
 **群聊待办提取器** —— 把一段群聊记录贴进去，自动抽出里面"要做的事"、截止时间，以及"跟你有关"的提醒，还能在日历里看时间分布。纯前端、本地运行；默认不联网、只用本地规则，也可以自己配置可选的 AI 服务来整理。
 
 ![界面演示](demo.png)
@@ -33,6 +31,30 @@
 | 网络 | **不需要**（只有第 6 步的可选 AI 分支需要） |
 | 依赖 | **零依赖**，无 `package.json`，无构建产物 |
 
+### 环境变量与配置模板
+
+**本项目没有任何环境变量，也不需要 `.env` 文件** —— 没有构建步骤、没有服务端、没有需要注入的密钥。克隆下来直接双击 `index.html` 就能跑完全部验收。
+
+唯一的可选配置是 AI 提取通道，四个字段在界面「⚙ AI」里填写，只存在本浏览器 `localStorage`（键 `group-chat-todo:ai`），不写入代码、仓库或导出文件。字段结构见仓库根目录的 [`config.example.json`](config.example.json)：
+
+```json
+{
+  "provider": "deepseek",
+  "baseUrl": "https://api.deepseek.com",
+  "model": "deepseek-chat",
+  "key": "<你的 API Key，只存在本机 localStorage>"
+}
+```
+
+| 字段 | 可选值 / 说明 | 缺省 |
+|---|---|---|
+| `provider` | `deepseek` / `openai` / `ollama` / `custom` | `deepseek` |
+| `baseUrl` | 任意 OpenAI 兼容接口地址，末尾斜杠会被忽略 | 随 provider 预设 |
+| `model` | 该接口支持的模型名 | 随 provider 预设 |
+| `key` | 只填一次，存本机；选 `ollama` 时可为空 | 空（即不启用 AI） |
+
+> 四个字段任一为空（`ollama` 除外）就不启用 AI，走本地规则。`config.example.json` 里是占位值，**不要把自己的真实 Key 提交进仓库**——可随时用 `git grep -n "sk-"` 自检。
+
 ### 目录结构
 
 ```
@@ -44,7 +66,7 @@ group-chat-todo/
 ├── sample-chat.txt  # 合成群聊样本（验收用）
 ├── PRD.md           # 需求边界与验收标准
 ├── AGENTS.md        # AI 协作者规则
-└── docs/prompt-log/ # AI 协作过程快照（3 条完整 Prompt 链）
+└── docs/prompt-log/ # AI 协作过程快照（4 条完整 Prompt 链）
 ```
 
 > **为什么不用框架**：这是刻意的约束，不是能力限制。需求是"双击即开、默认离线"，框架和构建步骤只会让复现多一步、让评委多装一次 Node。**"一键复现"在这里不是承诺，是一个文件操作。**
@@ -121,7 +143,7 @@ localStorage.clear()
 
 ### 想继续往下看
 
-- **AI 是怎么被一步步约束成这个样子的**：看 [`docs/prompt-log/`](docs/prompt-log/)，3 条完整 Prompt 链，覆盖一次界面重设计、一次删除动效追查与一次 WebGL 渲染修复
+- **AI 是怎么被一步步约束成这个样子的**：看 [`docs/prompt-log/`](docs/prompt-log/)，4 条完整 Prompt 链，覆盖一次提取精度迭代、一次界面重设计、一次删除动效追查与一次 WebGL 渲染修复
 - **为什么某些地方故意"不智能"**：看 [`README.md` 的「已知问题 / 边界」](#已知问题--边界)
 - **需求边界**：看 [`PRD.md`](PRD.md)
 

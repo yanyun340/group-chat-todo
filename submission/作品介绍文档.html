@@ -223,7 +223,7 @@
   <div class="grid g3" style="margin-top:14px">
     <div class="card"><span class="k">默认路径</span><span class="v" style="font-size:11pt">本地规则<small> · 离线</small></span><p>零网络、零密钥，逐条可追溯</p></div>
     <div class="card"><span class="k">可选增强</span><span class="v" style="font-size:11pt">AI 提取<small> · 自带 Key</small></span><p>证据对不上就丢弃，失败自动回退</p></div>
-    <div class="card"><span class="k">协作方式</span><span class="v" style="font-size:11pt">判断权在我<small> · 实现权在 AI</small></span><p>三条 Prompt 链完整留痕</p></div>
+    <div class="card"><span class="k">协作方式</span><span class="v" style="font-size:11pt">判断权在我<small> · 实现权在 AI</small></span><p>四条 Prompt 链完整留痕</p></div>
   </div>
 
   <div class="meta">
@@ -234,7 +234,7 @@
   </div>
 
   <ul class="links">
-    <li><b>作者</b>黄树睿 · 大数据二班</li>
+    <li><b>作者</b>韶关学院 · 黄树睿</li>
     <li><b>作品仓库</b>github.com/yanyun340/group-chat-todo（Public，四十余次提交）</li>
     <li><b>在线体验</b>yanyun340.github.io/group-chat-todo/</li>
     <li><b>演示视频</b>7 分 42 秒 / MP4 / 1920×1080 / 含 3 分 09 秒 AI 协同过程复现（公开平台链接见提交表单第 7 项）</li>
@@ -260,21 +260,22 @@
     <div class="card"><span class="k">GIT 提交</span><span class="v">40<small>+</small></span><p>2026-10-15 → 11-17，逐功能落地</p></div>
     <div class="card"><span class="k">手写代码</span><span class="v">6163<small> 行</small></span><p>0 框架 · 0 依赖 · 0 构建步骤</p></div>
     <div class="card"><span class="k">样本提取</span><span class="v">8<small> 条</small></span><p>5 待办 / 3 待确认，1 条重复已合并</p></div>
-    <div class="card"><span class="k">AI 协作</span><span class="v">93<small> 轮</small></span><p>取 3 条完整 Prompt 链做快照</p></div>
+    <div class="card"><span class="k">AI 协作</span><span class="v">93<small> 轮</small></span><p>取 4 条完整 Prompt 链做快照</p></div>
   </div>
 
   <p>这不是一个「把群聊丢给大模型」的作品。它的核心主张是：<strong>待办提取的第一要求不是智能，而是可信</strong>。所以默认路径是一条可以在浏览器里逐条追溯的本地规则链——每一条待办都必须说得出它命中了原文里的哪几个字；AI 是可选增强，它给出的每一条也必须带逐字出现在原文里的证据，对不上就整条丢弃。整套行为由一个 36 行的 <code>AGENTS.md</code> 约束，开发过程按 Prompt 链归档，任意历史版本可 <code>git worktree</code> 还原。</p>
 
-  <h3>评审五维度 → 本文对应章节</h3>
+  <h3>怎么读这份文档</h3>
   <table>
-    <caption>按赛道公布的评审标准，把本文档的章节直接映射过去</caption>
-    <thead><tr><th style="width:26%">评审维度</th><th style="width:9%">权重</th><th>本文对应位置</th></tr></thead>
+    <caption>不必从头读到尾：按下表挑你要确认的那件事，直接翻过去</caption>
+    <thead><tr><th style="width:34%">你可能想先确认</th><th>翻到</th></tr></thead>
     <tbody>
-      <tr><td>过程可复现性与演进链路</td><td class="num">25%</td><td>第五章（代码如何分层便于审查）、第八章（10 分钟复现 + 提交历史 + 任意版本回放）</td></tr>
-      <tr><td>解题有效性与实用价值</td><td class="num">25%</td><td>第一章（痛点与范围）、第三章（亮点）、第九章（界面实拍）</td></tr>
-      <tr><td>方法创新性与意图控制</td><td class="num">20%</td><td>第六章（判断权在人 / 实现权在 AI，含三条 Prompt 链原文摘录）</td></tr>
-      <tr><td>工程质量与架构设计</td><td class="num">15%</td><td>第五章（关键技术）、第七章（分层与约束执行）</td></tr>
-      <tr><td>用户体验与产品精细度</td><td class="num">15%</td><td>第二章（十步操作）、第三章（可解释与动效取舍）、第九章</td></tr>
+      <tr><td>这是什么，给谁用，边界在哪</td><td>第一章；想直接看效果，翻第九章的七张实拍，或打开在线体验</td></tr>
+      <tr><td>功能是不是真能用，具体怎么操作</td><td>第二章（十步操作 + 14 行样本逐行对照）；第三章（八条亮点，每条都写了怎么验证）</td></tr>
+      <tr><td>验证做到什么程度，有没有真跑过</td><td>第四章（15 项验证矩阵，附本机实测值）、第八章（10 分钟复现表）</td></tr>
+      <tr><td>AI 生成的代码靠不靠谱，我怎么约束它</td><td>第六章（判断权在人 / 实现权在 AI，含四条 Prompt 链原文摘录）、第七章（分层与三道闸）</td></tr>
+      <tr><td>代码结构乱不乱，规则会不会散落</td><td>第五章（关键技术，含常量与函数的实际行号）</td></tr>
+      <tr><td>能不能复现，开发过程是不是编的</td><td>第八章（任意历史版本可 <code>git worktree</code> 回放、93 轮对话原始记录）</td></tr>
     </tbody>
   </table>
 
@@ -693,7 +694,7 @@ if (!ok) drop(item);   // 整条丢弃，不降级为「无依据条目」</pre>
 
   <h3>WebGL 背景：一个 161 行的着色器，和它唯一一次事故</h3>
   <p>背景不只是一张图，而是一个原生 WebGL 着色器：主题的四种颜色在纸底上缓慢晕染漂移，叠加细纸噪点，鼠标移动带一层光晕。它只依赖一个 <code>&lt;canvas&gt;</code>，没有 three.js，没有构建。</p>
-  <p>它带来过一次真实的 bug，也是三条 Prompt 链里最短的一条：<strong>全屏放大或缩小时，某些颜色会变成黑色。</strong>症状只在渲染里出现，代码看起来处处正确。根因是 canvas 尺寸改变后没有重新分配绘制缓冲，viewport 与绑定状态回不到可用状态；修法不是加判断，而是把绑定收成一个可重放的 <code>bindState()</code>，并在 resize 后重绘一帧（<code>20e665c</code>）。</p>
+  <p>它带来过一次真实的 bug，也是四条 Prompt 链里最短的一条：<strong>全屏放大或缩小时，某些颜色会变成黑色。</strong>症状只在渲染里出现，代码看起来处处正确。根因是 canvas 尺寸改变后没有重新分配绘制缓冲，viewport 与绑定状态回不到可用状态；修法不是加判断，而是把绑定收成一个可重放的 <code>bindState()</code>，并在 resize 后重绘一帧（<code>20e665c</code>）。</p>
   <div class="quote">
     <span class="who">链 03 的验证方式</span>
     <p>AI 的验证不是「代码看起来对」，而是改视口 + 截图。这条做法后来写进了 <code>AGENTS.md</code>：「必须在浏览器里实际打开验证，不能只读代码判断『应该能跑』」。同一个 bug 的复现方法也留在了 prompt-log 里：<code>git worktree add ../demo-shader 21d5824</code>，打开后拖动窗口宽度从 1920 缩到约 800，背景会出现黑色块。</p>
@@ -727,7 +728,7 @@ if (!ok) drop(item);   // 整条丢弃，不降级为「无依据条目」</pre>
     <div class="secnum">06</div>
     <div class="sectitle">
       <h2>意图控制策略</h2>
-      <div class="dek">判断权在人，实现权在 AI · 三条链的原始记录</div>
+      <div class="dek">判断权在人，实现权在 AI · 四条链的原始记录</div>
     </div>
   </div>
 
@@ -760,16 +761,18 @@ if (!ok) drop(item);   // 整条丢弃，不降级为「无依据条目」</pre>
 
   
 
-  <h3>三条 Prompt 链：一次视觉重构、一次缺陷追溯、一次渲染修复</h3>
-  <p>它们是开发过程中最有信息量的三段，完整记录在 <code>docs/prompt-log/</code>，每条都自带可独立运行的复现步骤。原始记录共 93 轮提问 / 278 轮回复，已脱敏（本机用户名、项目目录名、第三方邮箱与具体地点替换为占位符）。</p>
+  <h3>四条 Prompt 链：提取精度、视觉重构、缺陷追溯、渲染修复</h3>
+  <p>它们是开发过程中最有信息量的四段，完整记录在 <code>docs/prompt-log/</code>，每条都自带可独立运行的复现步骤。原始记录共 93 轮提问 / 278 轮回复，已脱敏（本机用户名、项目目录名、第三方邮箱与具体地点替换为占位符）。</p>
   <table>
     <thead><tr><th style="width:8%">#</th><th style="width:30%">主题</th><th style="width:14%">类型</th><th style="width:28%">对应提交</th><th>它证明了什么</th></tr></thead>
     <tbody>
       <tr><td class="num">01</td><td>一句模糊的设计要求，换掉了整个界面</td><td>视觉重构</td><td><code>61f3bb4</code> → <code>c275340</code></td><td>模糊输入可以先被翻译成可执行规则，再被执行</td></tr>
       <tr><td class="num">02</td><td>AI 说动画播完了，我说没有</td><td>缺陷追溯</td><td><code>6709602</code> → <code>8a3eaa3</code> → <code>6ffc3a6</code> → <code>faedab6</code></td><td>AI 的「验收通过」不是验收；先测量再改</td></tr>
       <tr><td class="num">03</td><td>一句话症状，一个只在渲染里出现的 bug</td><td>渲染修复</td><td><code>20e665c</code></td><td>最小的修复范围比「重构一遍」更有价值</td></tr>
+      <tr><td class="num">04</td><td>一段真实班级通知，为什么只被抽出一条待办</td><td><strong>核心功能迭代</strong></td><td><code>712b78f</code></td><td>先要「它现在会抽成什么」，再决定改哪里；诊断先于实施</td></tr>
     </tbody>
   </table>
+  <p>其中链 04 是最能代表这个作品的一条：它改的不是界面也不是动效，而是<strong>提取规则本身</strong>——一段同时含两件事、两条条件的真实军事课通知，被老规则压成了一条关键词为「完成」、状态还是「待确认」的大待办。完整的三轮记录见 <code>docs/prompt-log/04-长通知拆条.md</code>，下面摘录链 02，因为它是四条里唯一一条「AI 先说通过了、用户说没有」的完整往复。</p>
 
   <h3>链 02 逐轮摘录：三轮，从「看不见」到「一行修复」</h3>
 
